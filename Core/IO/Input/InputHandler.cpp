@@ -10,12 +10,11 @@ std::string InputHandler::readInput() {
     std::cout << ">> ";
 
     std::string input;
-    //std::cin.ignore();
     std::getline(std::cin, input);
     return input;
 }
 
-Directive InputHandler::identifyDirective(std::string input) {
+Directive InputHandler::identifyDirective(std::string input, OthelloColor agentColor) {
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
 
     // All input is case sensitive.
@@ -25,7 +24,7 @@ Directive InputHandler::identifyDirective(std::string input) {
                 return Directive::Comment;
             }
 
-            if(parseInt(input) != -1) {
+            if(Utils::parseInt(input) >= 0) {
                 return Directive::EndGame;
             }
 
@@ -38,7 +37,7 @@ Directive InputHandler::identifyDirective(std::string input) {
             }
 
             // Game conceded
-            if(parseInt(input) != -1) {
+            if(Utils::parseInt(input) >= 0) {
                 return Directive::EndGame;
             }
             break;
@@ -49,7 +48,7 @@ Directive InputHandler::identifyDirective(std::string input) {
                 return Directive::InitializeWhite;
             } else {
                 // Game conceded
-                if(parseInt(input) != -1) {
+                if(Utils::parseInt(input) <= 64) { // Total num of spaces
                     return Directive::EndGame;
                 }
 
@@ -57,47 +56,21 @@ Directive InputHandler::identifyDirective(std::string input) {
             }
         case 3:
             // Check to see if str[1] is a letter a-h
-            if(input.find_first_not_of("abcdefgh", 1, 1) == std::string::npos) {
+            if(input.find_first_of("abcdefgh", 1) == std::string::npos) {
                 return Directive::Invalid;
             }
 
             // Check to see if str[2] is a number 1-8
-            if(input.find_first_not_of("12345678", 2, 1) == std::string::npos) {
+            if(input.find_first_of("12345678", 2) == std::string::npos) {
                 return Directive::Invalid;
             }
 
-            switch(input[0]) {
-                case 'B':
-                    return Directive::MoveSelf;
-                case 'W':
-                    return Directive::MoveOpponent;
-            }
-
-            // Game Conceded
-            if(parseInt(input) != -1) {
-                return Directive::EndGame;
+            if(input[0] == 'B') {
+                return agentColor == Black ? MoveSelf : MoveOpponent;
+            } else if(input[0] == 'W') {
+                return agentColor == White ? MoveSelf : MoveOpponent;
             }
 
             return Directive::Invalid;
     }
-}
-
-int InputHandler::parseInt(const std::string &input) {
-    try {
-        return std::stoi(input);
-    } catch(std::exception &e) {
-        return -1;
-    }
-}
-
-int InputHandler::charToInt(char column) {
-    std::string columns = "abcdefgh";
-    for(int i = 0; i < columns.size(); i++) {
-        char cur = columns[i];
-        if(cur == column) {
-            return i;
-        }
-    }
-
-    return -1;
 }

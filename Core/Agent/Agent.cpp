@@ -1,54 +1,27 @@
 //
-// Created by Harry Burnett on 8/29/21.
+// Created by Harry Burnett on 9/25/21.
 //
 
 #include "Agent.h"
-#include "../Logger.h"
 
-Agent::Agent(OthelloColor color, BitBoard self, BitBoard opponent) : color(color), self(self), opponent(opponent) {}
+Agent::Agent(OthelloColor c) : m_board(BitBoard(c)) {}
 
-std::vector<std::array<int, 2>> Agent::allPossibleMoves() {
-    // TODO: Implement
-    Logger::logComment("Computer is determining all possible moves. (All possible moves)");
-    Logger::logComment("Computer is ranking the moves. (All possible moves)");
-    Logger::logComment("Computer found best possible applyMove. (All possible moves)");
+int Agent::selectMove(uint64_t possibilities) {
+    // For now, select an arbitrary move.
+    for(int i = 0; i < 64; i++) {
+        uint64_t mask = 1LL << i;
+        if((possibilities & mask) != 0) {
+            return i;
+        }
+    }
 
-    return std::vector<std::array<int, 2>>();
+    return -1; // Pass?
 }
 
-std::array<int, 2> Agent::selectMove(std::vector<std::array<int, 2>> allPossibleMoves) {
-    int rIdx = std::rand() % allPossibleMoves.size();
-    return allPossibleMoves[rIdx];
+void Agent::setBitBoard(BitBoard board) {
+    this->m_board = board;
 }
 
-std::array<int, 2> Agent::getMove() {
-    return std::array<int, 2>();
-}
-
-OthelloColor Agent::getColor() const {
-    return color;
-}
-
-void Agent::setColor(OthelloColor color) {
-    Agent::color = color;
-}
-
-const BitBoard &Agent::getSelf() const {
-    return self;
-}
-
-void Agent::setSelf(const BitBoard &self) {
-    Agent::self = self;
-}
-
-const BitBoard &Agent::getOpponent() const {
-    return opponent;
-}
-
-void Agent::setOpponent(const BitBoard &opponent) {
-    Agent::opponent = opponent;
-}
-
-long long shiftNorth(long long n) {
-
+BitBoard Agent::getBitBoard() {
+    return this->m_board;
 }

@@ -7,6 +7,7 @@
 
 #include "../Directive.h"
 #include "../../OthelloGame/OthelloColor.h"
+#include "../../Utils.h"
 #include <string>
 #include <array>
 
@@ -14,13 +15,19 @@ class OutputHandler {
 public:
     /**
      * Sends referee-compatible output to stdout. This method is only run after
-     * whichever directive passed to this method has been successfully parsed and
+     * whichever d passed to this method has been successfully parsed and
      * all relevant operations have been completed.
-     * @param directive Instruction that was just confirmed.
+     * @param d Instruction that was just confirmed.
      * @param input Original input from console / opponent (bot).
      */
-    static void outputDirectiveConfirmation(Directive directive, const std::string &input);
-    static void outputMove(OthelloColor color, std::array<int, 2> moveSet);
+    static void outputDirective(Directive d, const std::string &input);
+    /**
+     * Returns a move set for a given (valid) input. Returns an invalid array { -1, -1 } if the input is invalid.
+     * @param input
+     * @return
+     */
+    static int toPos(std::string input);
+    static std::string getMoveOutput(OthelloColor c, int pos);
 };
 
 

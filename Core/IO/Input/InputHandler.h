@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "../../Utils.h"
 #include "../Directive.h"
 #include "../../OthelloGame/OthelloColor.h"
 
@@ -17,21 +18,13 @@ public:
      * @return Console input
      */
     static std::string readInput();
+
     /**
      * Identifies which directive is given from the console input.
      * @param input Console input
      * @return Matching Directive
      */
-    static Directive identifyDirective(std::string input);
-    /**
-     * Othello board is in lettered columns, a-h. This will convert the character to the desired index.
-     * @param column
-     * @return
-     */
-    static int charToInt(char column);
-
-private:
-    static int parseInt(const std::string &input);
+    static Directive identifyDirective(std::string input, OthelloColor agentColor);
 };
 
 #endif //OTHELLOPROJECT_CPP_INPUTHANDLER_H
