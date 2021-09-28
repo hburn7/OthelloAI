@@ -75,7 +75,6 @@ int main(int argc, char* argv[]) {
             int selection = agent.selectMove(possibleMoves);
 
             gameBoard.applyMove(agentColor, selection);
-            gameBoard.lineCap(agentColor, selection);
 
             std::string out = OutputHandler::getMoveOutput(agentColor, selection);
 
@@ -97,7 +96,6 @@ int main(int argc, char* argv[]) {
             }
 
             gameBoard.applyMove(playerColor, move);
-            gameBoard.lineCap(playerColor, move);
             input = OutputHandler::getMoveOutput(playerColor, move);
             directive = InputHandler::identifyDirective(input, playerColor);
         }
