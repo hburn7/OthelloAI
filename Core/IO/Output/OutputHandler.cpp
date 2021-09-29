@@ -16,7 +16,6 @@ void OutputHandler::outputDirective(Directive d, const std::string &input) {
             std::cout << "R W" << std::endl;
             break;
         case Directive::MoveSelf:
-        case Directive::MoveOpponent:
         case Directive::PassBlack:
         case Directive::PassWhite:
         case Directive::Comment:

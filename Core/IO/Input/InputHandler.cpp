@@ -17,15 +17,19 @@ std::string InputHandler::readInput() {
 Directive InputHandler::identifyDirective(std::string input, OthelloColor agentColor) {
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
 
+    if(Utils::parseInt(input) >= 0) {
+        // todo: this code doesn't run at all.
+        // todo: perhaps the EndGame directive isn't necessary.
+
+        Logger::logComment("Integer '" + input + "' detected. End game imminent!");
+        return Directive::EndGame;
+    }
+
     // All input is case sensitive.
     switch(input.length()) {
         default:
             if(input[0] == 'C') {
                 return Directive::Comment;
-            }
-
-            if(Utils::parseInt(input) >= 0) {
-                return Directive::EndGame;
             }
 
             return Directive::Invalid;
@@ -35,11 +39,6 @@ Directive InputHandler::identifyDirective(std::string input, OthelloColor agentC
             } else if(input[0] == 'W') {
                 return Directive::PassWhite;
             }
-
-            // Game conceded
-            if(Utils::parseInt(input) >= 0) {
-                return Directive::EndGame;
-            }
             break;
         case 2:
             if(input == "IB") {
@@ -47,11 +46,6 @@ Directive InputHandler::identifyDirective(std::string input, OthelloColor agentC
             } else if(input == "IW") {
                 return Directive::InitializeWhite;
             } else {
-                // Game conceded
-                if(Utils::parseInt(input) <= 64) { // Total num of spaces
-                    return Directive::EndGame;
-                }
-
                 return Directive::Invalid;
             }
         case 3:

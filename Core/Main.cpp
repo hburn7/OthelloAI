@@ -67,8 +67,11 @@ int main(int argc, char* argv[]) {
         std::string input;
         Directive directive;
 
+        bool agentTurn = playAsBlack && blackTurn || !playAsBlack && !blackTurn;
+        bool playerTurn = !agentTurn;
+
         // Agent makes a move.
-        if(playAsBlack && blackTurn || !playAsBlack && !blackTurn) {
+        if(agentTurn) {
             uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
             int selection = agent.selectMove(possibleMoves);
 
@@ -95,11 +98,13 @@ int main(int argc, char* argv[]) {
 
             gameBoard.applyMove(playerColor, move);
             input = OutputHandler::getMoveOutput(playerColor, move);
-            directive = InputHandler::identifyDirective(input, playerColor);
+            directive = InputHandler::identifyDirective(input, agentColor);
         }
 
         // Output
-        OutputHandler::outputDirective(directive, input);
+        if(directive != MoveOpponent) {
+            OutputHandler::outputDirective(directive, input);
+        }
 
         if(directive == Directive::EndGame) {
             // Score would have been printed by outputDirective.
