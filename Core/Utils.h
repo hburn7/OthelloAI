@@ -5,8 +5,7 @@
 #ifndef OTHELLOPROJECT_CPP_UTILS_H
 #define OTHELLOPROJECT_CPP_UTILS_H
 
-#include <string.h>
-#include <string> // This has to be here...don't ask me why!!
+#include <string>
 #include <tuple>
 
 class Utils {
