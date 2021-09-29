@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <algorithm>
 #include "InputHandler.h"
 #include "../../Logger.h"
 
