@@ -1,5 +1,5 @@
 #include <bitset>
-#include <string>
+#include <string.h>
 
 #include "Logger.h"
 
@@ -12,12 +12,12 @@
 #include "OthelloGame/OthelloGameBoard.h"
 
 int main(int argc, char* argv[]) {
-    bool interactive = argc > 0 && argv[1] == "-interactive";
+    bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
 
     // Init both sides.
-    BitBoard black = BitBoard(Black);
-    BitBoard white = BitBoard(White);
-    OthelloGameBoard gameBoard = OthelloGameBoard(black, white);
+    BitBoard agentBoard = BitBoard(Black);
+    BitBoard playerBoard = BitBoard(White);
+    OthelloGameBoard gameBoard = OthelloGameBoard(agentBoard, playerBoard);
 
     Logger::logComment("Gameboard initialized.");
     gameBoard.drawBoard();
@@ -27,9 +27,6 @@ int main(int argc, char* argv[]) {
 
     OthelloColor agentColor = Black;
     OthelloColor playerColor = White;
-
-    BitBoard agentBoard = black;
-    BitBoard playerBoard = white;
 
     Logger::logComment("Initializing playerAgent selection");
     Logger::logComment("Please initialize the agent color.");
@@ -43,8 +40,9 @@ int main(int argc, char* argv[]) {
         agentColor = White;
         playerColor = Black;
 
-        agentBoard = white;
-        playerBoard = black;
+        BitBoard copyAgent = agentBoard;
+        agentBoard = playerBoard;
+        playerBoard = copyAgent;
     } else {
         Logger::logComment("Something went wrong during initialization!");
         return EXIT_FAILURE;

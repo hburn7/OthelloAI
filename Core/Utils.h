@@ -5,7 +5,9 @@
 #ifndef OTHELLOPROJECT_CPP_UTILS_H
 #define OTHELLOPROJECT_CPP_UTILS_H
 
-#include <string>
+#include <string.h>
+#include <string> // This has to be here...don't ask me why!!
+#include <tuple>
 
 class Utils {
 public:

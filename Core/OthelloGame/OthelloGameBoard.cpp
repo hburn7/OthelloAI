@@ -3,7 +3,7 @@
 //
 
 #include <bitset>
-#include <string>
+#include <string.h>
 
 #include "OthelloGameBoard.h"
 #include "../Logger.h"
@@ -63,8 +63,8 @@ void OthelloGameBoard::drawBoard() {
 }
 
 void OthelloGameBoard::drawBoard(uint64_t black, uint64_t white) {
-    Logger::logComment("\t  A B C D E F G H");
-    Logger::logComment("\t  * * * * * * * *");
+    Logger::logComment("    A B C D E F G H");
+    Logger::logComment("    * * * * * * * *");
 
     auto blackBitset = std::bitset<64>(black);
     auto whiteBitset = std::bitset<64>(white);
@@ -133,10 +133,9 @@ bool OthelloGameBoard::isGameComplete() {
 }
 
 int OthelloGameBoard::countPieces(OthelloColor color) {
-    if(color == Black) {
-        std::bitset bitset = std::bitset<64>(this->getBlack().getBits());
-        return bitset.count();
-    }
+    BitBoard toCount = color == Black ? this->getBlack() : this->getWhite();
+    auto bitset = std::bitset<64>(toCount.getBits());
+    return bitset.count();
 }
 
 // Credit to Dr. Mec for this algorithm.

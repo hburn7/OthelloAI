@@ -6,7 +6,7 @@
 #define OTHELLOPROJECT_CPP_LOGGER_H
 
 #include <iostream>
-#include <string>
+#include <string.h>
 
 class Logger {
 public:

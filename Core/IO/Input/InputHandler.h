@@ -5,7 +5,7 @@
 #ifndef OTHELLOPROJECT_CPP_INPUTHANDLER_H
 #define OTHELLOPROJECT_CPP_INPUTHANDLER_H
 
-#include <string>
+#include <string.h>
 
 #include "../../Utils.h"
 #include "../Directive.h"

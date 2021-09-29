@@ -7,7 +7,7 @@
 #include "../../Logger.h"
 
 std::string InputHandler::readInput() {
-    std::cout << ">> ";
+//    std::cout << ">> ";
 
     std::string input;
     std::getline(std::cin, input);
@@ -70,7 +70,8 @@ Directive InputHandler::identifyDirective(std::string input, OthelloColor agentC
             } else if(input[0] == 'W') {
                 return agentColor == White ? MoveSelf : MoveOpponent;
             }
-
             return Directive::Invalid;
     }
+
+    return Directive::Invalid;
 }

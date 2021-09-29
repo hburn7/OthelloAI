@@ -8,7 +8,7 @@
 #include "../Directive.h"
 #include "../../OthelloGame/OthelloColor.h"
 #include "../../Utils.h"
-#include <string>
+#include <string.h>
 #include <array>
 
 class OutputHandler {
