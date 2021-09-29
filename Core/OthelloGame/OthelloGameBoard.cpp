@@ -203,7 +203,7 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
 
         // Keep moving forward, identifying bits to flip
         // If we are in this loop, there's an opponent piece here.
-        for(int j = 0; (j < 6) & (move != 0); j++) {
+        while(possibility != 0LL) {
             to_change |= possibility;
             if(shiftDir > 0) {
                 search >>= shiftDir;
