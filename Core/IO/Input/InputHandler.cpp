@@ -15,7 +15,7 @@ std::string InputHandler::readInput() {
     return input;
 }
 
-Directive InputHandler::identifyDirective(std::string input, OthelloColor agentColor) {
+Directive InputHandler::identifyDirective(std::string input, OthelloColor color) {
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
 
     if(Utils::parseInt(input) >= 0) {
@@ -61,9 +61,9 @@ Directive InputHandler::identifyDirective(std::string input, OthelloColor agentC
             }
 
             if(input[0] == 'B') {
-                return agentColor == Black ? MoveSelf : MoveOpponent;
+                return color == Black ? MoveSelf : MoveOpponent;
             } else if(input[0] == 'W') {
-                return agentColor == White ? MoveSelf : MoveOpponent;
+                return color == White ? MoveSelf : MoveOpponent;
             }
             return Directive::Invalid;
     }

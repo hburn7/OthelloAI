@@ -35,9 +35,9 @@ std::string OutputHandler::getMoveOutput(OthelloColor c, int pos) {
     char colorChar = c == Black ? 'B' : 'W';
 
     // Pass
-    if(pos < 0) {
+    if(pos < 0 || pos > 63) {
         // C++ doesn't like returning std::to_string(colorChar)...
-        return colorChar == 'B' ? "B" : "W";
+        return c == Black ? "B" : "W";
     }
 
     std::tuple<int, char> rowCol = Utils::posToRowCol(pos);
@@ -63,6 +63,14 @@ int OutputHandler::toPos(std::string input) {
     int y = 8 - atoi(&input[4]);
 
     int pos = (y * 8) + x;
+
+    if(pos < 0 || pos > 63) {
+        // Can happen if we try to convert a standalone letter. e.g. W or B
+        Logger::logComment("DEBUG: Received input '" + input + "'. Returning pos -1!");
+        return -1;
+    }
+
     Logger::logComment("DEBUG: Converted " + input + " to pos: " + std::to_string(pos));
+
     return pos;
 }

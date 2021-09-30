@@ -15,7 +15,7 @@ int Agent::selectMove(uint64_t possibilities) {
         }
     }
 
-    return -1; // Pass?
+    return -1; // Pass
 }
 
 void Agent::setBitBoard(BitBoard board) {

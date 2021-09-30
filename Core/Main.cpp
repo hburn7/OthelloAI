@@ -65,22 +65,21 @@ int main(int argc, char* argv[]) {
         Logger::logComment(prompt);
 
         std::string input;
-        Directive directive;
+        Directive newDirective;
 
         bool agentTurn = playAsBlack && blackTurn || !playAsBlack && !blackTurn;
-        bool playerTurn = !agentTurn;
 
         // Agent makes a move.
         if(agentTurn) {
             uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
             int selection = agent.selectMove(possibleMoves);
 
-            gameBoard.applyMove(agentColor, selection);
+            if(selection >= 0) {
+                gameBoard.applyMove(agentColor, selection);
+            }
 
-            std::string out = OutputHandler::getMoveOutput(agentColor, selection);
-
-            input = out;
-            directive = InputHandler::identifyDirective(input, agentColor);
+            input = OutputHandler::getMoveOutput(agentColor, selection);
+            newDirective = InputHandler::identifyDirective(input, agentColor);
         }
         else
         {
@@ -96,17 +95,20 @@ int main(int argc, char* argv[]) {
                 move = playerAgent.selectMove(possibleMoves);
             }
 
-            gameBoard.applyMove(playerColor, move);
+            if(move >= 0) {
+                gameBoard.applyMove(playerColor, move);
+            }
+
             input = OutputHandler::getMoveOutput(playerColor, move);
-            directive = InputHandler::identifyDirective(input, agentColor);
+            newDirective = InputHandler::identifyDirective(input, playerColor);
         }
 
         // Output
-        if(directive != MoveOpponent) {
-            OutputHandler::outputDirective(directive, input);
+        if(agentTurn) {
+            OutputHandler::outputDirective(newDirective, input);
         }
 
-        if(directive == Directive::EndGame) {
+        if(newDirective == Directive::EndGame) {
             // Score would have been printed by outputDirective.
             if(gameBoard.isGameComplete()) {
                 return EXIT_SUCCESS;
@@ -115,7 +117,7 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
 
-        if(directive == Directive::Invalid) {
+        if(newDirective == Directive::Invalid) {
             Logger::logComment("Invalid move! Try again.");
             continue;
         }

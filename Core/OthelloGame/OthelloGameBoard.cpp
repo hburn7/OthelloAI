@@ -189,26 +189,26 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
     uint64_t possibility;
 
     for(int i = 0; i < DIRECTION_COUNT; i++) {
-        int shiftDir = DIR_INCREMENTS[i];
         uint64_t to_change = 0LL;
         uint64_t search;
 
-        if(shiftDir > 0) {
-            search = (move >> shiftDir) & DIR_MASKS[i];
+        if(DIR_INCREMENTS[i] > 0) {
+            search = (move << DIR_INCREMENTS[i]) & DIR_MASKS[i];
         } else {
-            search = (move << -shiftDir) & DIR_MASKS[i];
+            search = (move >> -DIR_INCREMENTS[i]) & DIR_MASKS[i];
         }
 
         possibility = oppBits & search;
 
         // Keep moving forward, identifying bits to flip
         // If we are in this loop, there's an opponent piece here.
+
         while(possibility != 0LL) {
             to_change |= possibility;
-            if(shiftDir > 0) {
-                search >>= shiftDir;
+            if(DIR_INCREMENTS[i] > 0) {
+                search = (search << DIR_INCREMENTS[i]) & DIR_MASKS[i];
             } else {
-                search <<= -shiftDir;
+                search = (search >> -DIR_INCREMENTS[i]) & DIR_MASKS[i];
             }
 
             if((selfBits & search) != 0) {
@@ -220,11 +220,11 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
         }
     }
 
-    oppBits &= ~f_fin;
     selfBits |= f_fin;
+    oppBits = (~f_fin) & oppBits;
 
-    opp.setBits(oppBits);
     self.setBits(selfBits);
+    opp.setBits(oppBits);
 
     this->m_black = color == Black ? self : opp;
     this->m_white = color == Black ? opp : self;

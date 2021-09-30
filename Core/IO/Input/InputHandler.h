@@ -22,9 +22,10 @@ public:
     /**
      * Identifies which directive is given from the console input.
      * @param input Console input
+     * @param color The color of the player (or agent) we are looking at.
      * @return Matching Directive
      */
-    static Directive identifyDirective(std::string input, OthelloColor agentColor);
+    static Directive identifyDirective(std::string input, OthelloColor color);
 };
 
 #endif //OTHELLOPROJECT_CPP_INPUTHANDLER_H
