@@ -6,9 +6,12 @@
 #define OTHELLOPROJECT_CPP_OTHELLOGAMEBOARD_H
 
 #include <bitset>
+#include <math.h>
+#include <vector>
 
 #include "BitBoard.h"
 #include "../Utils.h"
+#include "../Agent/Agent.h"
 
 /**
  * Represents the entire gameboard for both black and white. When working
@@ -35,13 +38,12 @@ public:
      */
     uint64_t generateMoves(long playerDisks, long oppDisks);
     /**
-     * Captures opponent pieces in a line, flipping all necessary opponent pieces along the way.
-     * @param color The color of the player making the action
-     * @param newPos The most recent position selected on the board to move to.
-     * @param previousState The previous state of the board, before newPos is applied.
-     * @param curState The new state of the board, after newPos is applied.
+     * Selects a move for the given player.
+     * @param playerDisks The disks belonging to the player the move is generated for.
+     * @param opponentDisks The disks belonging to the opponent player.
+     * @return An optimal move, using minimax and alpha-beta pruning.
      */
-    void lineCap(OthelloColor color, int newPos);
+    int selectMove(uint64_t playerDisks, uint64_t opponentDisks);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param color The color of the player we are applying this move for.
@@ -78,6 +80,39 @@ private:
      * @param color The color of the board to retrieve.
      */
     BitBoard getBoard(OthelloColor color);
+    /**
+     * Captures opponent pieces in a line, flipping all necessary opponent pieces along the way.
+     * @param color The color of the player making the action
+     * @param newPos The most recent position selected on the board to move to.
+     * @param previousState The previous state of the board, before newPos is applied.
+     * @param curState The new state of the board, after newPos is applied.
+     */
+    void lineCap(OthelloColor color, int newPos);
+    /**
+     * Performs a minimax search algorithm, producing a game tree, using alpha-beta pruning.
+     * @param pos Board position we are currently inspecting.
+     * @param depth The amount of depth left to search.
+     * @param alpha Best possible score maximizing player can achieve.
+     * @param beta Best possible score minimizing player can achieve.
+     * @param max Whether we are evaluating the maximimizing player or minimizing player.
+     * @param playerDisks The player's disks as they appear down the tree.
+     * @param opponentDisks The opponent's disks as they appear down the tree.
+     */
+    int minimax(uint64_t playerDisks, uint64_t opponentDisks, int depth, int alpha, int beta, bool max);
+    /**
+      * Scores the given board state and returns the value.
+      * A positive score means the board at the given configuration favors the agent.
+      * A negative score means the board favors the opponent.
+      * @param playerDisks The player's disks.
+      * @param opponentDisks The opponent's disks.
+      * @return A score reflective of how much the board is in favor of our agent.
+      */
+    int evaluate(uint64_t playerDisks, uint64_t opponentDisks);
+    /**
+    * Determines whether the game would be finished if the given disk states
+    * are to be applied to the board.
+    */
+    bool isGameComplete(uint64_t playerDisks, uint64_t opponentDisks);
 };
 
 

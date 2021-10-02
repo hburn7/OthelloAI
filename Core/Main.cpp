@@ -76,9 +76,9 @@ int main(int argc, char* argv[]) {
 
         // Agent makes a move.
         if(agentTurn) {
-            uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
-            int move = agent.selectMove(possibleMoves);
-
+            //uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
+//            int move = agent.selectMove(possibleMoves);
+            int move = gameBoard.selectMove(agentBoard.getBits(), playerBoard.getBits());
             // Apply move to board if not passing
             if(move >= 0) {
                 gameBoard.applyMove(agentColor, move);
@@ -110,7 +110,8 @@ int main(int argc, char* argv[]) {
 
             } else {
                 // "Player" agent makes a move if not interactive
-                move = playerAgent.selectMove(possibleMoves);
+//                move = playerAgent.selectMove(possibleMoves);
+                move = gameBoard.selectMove(playerBoard.getBits(), agentBoard.getBits());
             }
 
             // Apply move to board if not passing.
