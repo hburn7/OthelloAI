@@ -296,7 +296,7 @@ int OthelloGameBoard::selectMove(uint64_t playerDisks, uint64_t opponentDisks) {
     }
 
     for(int _ : children) {
-        evaluations.push_back(minimax(playerDisks, opponentDisks, 14, INT32_MIN, INT32_MAX, true));
+        evaluations.push_back(minimax(playerDisks, opponentDisks, 16, INT32_MIN, INT32_MAX, true));
     }
 
     // Iterate through child/evaluation score pairs and select best.
