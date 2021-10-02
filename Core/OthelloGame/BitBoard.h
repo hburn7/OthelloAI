@@ -40,12 +40,6 @@ public:
      */
     BitBoard(BitBoard const &oldBoard, uint64_t bits);
     /**
-     * Converts the binary bitboard into a 2D array.
-     * @return A 2D array representation of this bitboard.
-     */
-    std::array<std::array<int, 8>, 8> arrayRepresentation();
-
-    /**
      * Sets a single cell into an existing bitboard that may or may not be prepopulated.
      * @param pos The position on the board, ranging 0-63 inclusive, to set on the board.
      * @return the updated board
@@ -62,8 +56,19 @@ public:
      * @return The amount of non-empty pieces allocated on the bitboard.
      */
     int getCellCount();
+    /**
+     * Returns the bits for the board in the form of uint64_t.
+     * @return A uint_64t containing the bits for this board.
+     */
     uint64_t getBits();
+    /**
+     * Sets this boards bits to the desired value.
+     * @param bits Value to update this board's bits to.
+     */
     void setBits(uint64_t bits);
+    /**
+     * @return The color of the player who owns this board.
+     */
     OthelloColor getColor();
 
 private:
