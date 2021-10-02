@@ -1,5 +1,5 @@
 C_FILES = Main.cpp Logger.cpp Utils.cpp Agent/Agent.cpp IO/Input/InputHandler.cpp IO/Output/OutputHandler.cpp OthelloGame/BitBoard.cpp OthelloGame/OthelloGameBoard.cpp
-C_FLAGS = -std=c++17 -O -I ./ -I ./Agent -I ./IO -I ./IO/Input -I ./IO/Output -I ./OthelloGame
+C_FLAGS = -std=c++17 -O3 -I ./ -I ./Agent -I ./IO -I ./IO/Input -I ./IO/Output -I ./OthelloGame
 PROGRAM = hburnet2Othello
 
 Main.o: Main.cpp
