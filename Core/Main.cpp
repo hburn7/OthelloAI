@@ -98,15 +98,15 @@ int main(int argc, char* argv[]) {
                 move = OutputHandler::toPos(input);
 
                 // Compare player move to any legal move. We do not allow illegal moves.
-                bool valid;
-                do {
+                bool valid = possibleMoves > 0 && ((1LL << move) & possibleMoves) != 0;
+                while(!valid) {
                     Logger::logComment("Invalid move, please try again.");
 
                     input = InputHandler::readInput();
                     move = OutputHandler::toPos(input);
 
                     valid = ((1LL << move) & possibleMoves) != 0;
-                } while(!valid);
+                }
 
             } else {
                 // "Player" agent makes a move if not interactive
