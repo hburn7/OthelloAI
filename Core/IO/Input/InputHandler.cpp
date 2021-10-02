@@ -2,14 +2,10 @@
 // Created by Harry Burnett on 8/29/21.
 //
 
-#include <iostream>
-#include <algorithm>
+
 #include "InputHandler.h"
-#include "../../Logger.h"
 
 std::string InputHandler::readInput() {
-//    std::cout << ">> ";
-
     std::string input;
     std::getline(std::cin, input);
     return input;
@@ -17,14 +13,6 @@ std::string InputHandler::readInput() {
 
 Directive InputHandler::identifyDirective(std::string input, OthelloColor color) {
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
-
-    if(Utils::parseInt(input) >= 0) {
-        // todo: this code doesn't run at all.
-        // todo: perhaps the EndGame directive isn't necessary.
-
-        Logger::logComment("Integer '" + input + "' detected. End game imminent!");
-        return Directive::EndGame;
-    }
 
     // All input is case sensitive.
     switch(input.length()) {

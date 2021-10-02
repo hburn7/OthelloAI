@@ -5,6 +5,8 @@
 #ifndef OTHELLOPROJECT_CPP_OTHELLOGAMEBOARD_H
 #define OTHELLOPROJECT_CPP_OTHELLOGAMEBOARD_H
 
+#include <bitset>
+
 #include "BitBoard.h"
 #include "../Utils.h"
 
@@ -41,18 +43,6 @@ public:
      */
     void lineCap(OthelloColor color, int newPos);
     /**
-     * Converts binary into a 2D array representation (for console output)
-     */
-    static std::array<std::array<int, 8>, 8> binaryToArray(uint64_t bitboardBits);
-//    /**
-//     * Creates an 8 x 8 OthelloGameBoard (data represented as a 2-dimensional std::array of integers)
-//     * from two longs, b and w.
-//     * @param b Binary representation of all black pieces on the m_board.
-//     * @param w Binary representation of all white pieces on the m_board.
-//     * @return
-//     */
-//    static OthelloGameBoard createBoard(uint64_t b, uint64_t w);
-    /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param color The color of the player we are applying this move for.
      * The position to set the move at, ranging 0-63 inclusive.
@@ -69,10 +59,6 @@ public:
     BitBoard getBlack();
     BitBoard getWhite();
     /**
-     * @return A 2-dimensional int[] containing non-zero values for occupied spaces.
-     */
-    std::array<std::array<int, 8>, 8> getBoard();
-    /**
      * Returns true if the game is complete, false if the game is ongoing.
      * Uses the total count of occupied cells on the board to determine this.
      */
@@ -87,7 +73,6 @@ private:
     BitBoard m_black;
     BitBoard m_white;
 
-    std::array<std::array<int, 8>, 8> m_board; // TODO: Remove m_board - not needed.
     /**
      * Returns a bitboard for a given color.
      * @param color The color of the board to retrieve.

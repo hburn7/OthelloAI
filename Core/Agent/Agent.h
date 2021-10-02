@@ -19,9 +19,6 @@ public:
      * @return The position on the board, ranged 0-63 inclusive, to move to.
      */
     int selectMove(uint64_t possibilities);
-
-    void setBitBoard(BitBoard board);
-    BitBoard getBitBoard();
 private:
     BitBoard m_board;
 };

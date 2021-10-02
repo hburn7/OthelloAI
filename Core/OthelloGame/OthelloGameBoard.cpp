@@ -2,16 +2,12 @@
 // Created by Harry Burnett on 8/29/21.
 //
 
-#include <bitset>
-#include <string.h>
-
 #include "OthelloGameBoard.h"
-#include "../Logger.h"
 
 #define DIRECTION_COUNT 8
 #define UNIVERSE 0xffffffffffffffffULL
 
-const std::array<int, 8> DIR_INCREMENTS = {8, 9, 1, -7, -8, -9, -1, 7};
+const std::array<int, 8> DIR_INCREMENTS = { 8, 9, 1, -7, -8, -9, -1, 7 };
 const std::array<uint64_t, 8> DIR_MASKS = {
     0xFFFFFFFFFFFFFF00L, //North
     0xFEFEFEFEFEFEFE00L, //NorthWest
@@ -23,40 +19,7 @@ const std::array<uint64_t, 8> DIR_MASKS = {
     0x7F7F7F7F7F7F7F00L  //NorthEast
 };
 
-// todo: can be removed (all the array garbage)
-OthelloGameBoard::OthelloGameBoard(BitBoard black, BitBoard white) : m_black(black), m_white(white) {
-    this->m_board = std::array<std::array<int, 8>, 8> {};
-
-    // Initializes an empty gameboard (8 x 8) to zeroes.
-    this->m_board.fill(std::array<int, 8> { 0, 0, 0, 0, 0, 0, 0, 0 });
-
-    for(int i = 0; i < 8; i++) {
-        for(int j = 0; j < 8; j++) {
-            int blackPos = getBlack().arrayRepresentation()[i][j];
-            int whitePos = getWhite().arrayRepresentation()[i][j];
-
-            if(blackPos != 0) {
-                this->m_board[i][j] = blackPos;
-            } else if(whitePos != 0) {
-                this->m_board[i][j] = whitePos;
-            }
-        }
-    }
-}
-
-std::array<std::array<int, 8>, 8> OthelloGameBoard::binaryToArray(uint64_t bitboardBits) {
-    std::array<std::array<int, 8>, 8> board {};
-
-    board.fill(std::array<int, 8> { 0, 0, 0, 0, 0, 0, 0, 0 });
-
-    for(int i = 0; i < 64; i++) {
-        if(((bitboardBits >> i) & 1) == 1) {
-            board[i / 8][i % 8] = 1;
-        }
-    }
-
-    return board;
-}
+OthelloGameBoard::OthelloGameBoard(BitBoard black, BitBoard white) : m_black(black), m_white(white) {}
 
 void OthelloGameBoard::drawBoard() {
     drawBoard(this->getBlack().getBits(), this->getWhite().getBits());
@@ -101,10 +64,6 @@ BitBoard OthelloGameBoard::getWhite() {
     return this->m_white;
 }
 
-std::array<std::array<int, 8>, 8> OthelloGameBoard::getBoard() {
-    return this->m_board;
-}
-
 void OthelloGameBoard::applyMove(OthelloColor color, int pos) {
     BitBoard board = getBoard(color);
     board = board.setCellState(pos);
@@ -129,7 +88,16 @@ BitBoard OthelloGameBoard::getBoard(OthelloColor color) {
 }
 
 bool OthelloGameBoard::isGameComplete() {
-    return (this->getBlack().getBits() | this->getWhite().getBits()) == UNIVERSE;
+    auto blackDisks = this->getBlack().getBits();
+    auto whiteDisks = this->getWhite().getBits();
+
+    auto blackLegal = this->generateMoves(blackDisks, whiteDisks);
+    auto whiteLegal = this->generateMoves(whiteDisks, blackDisks);
+
+    // Game is over if either are true:
+    // - Neither player has a legal move
+    // - Board is completely full
+    return (blackLegal == 0 && whiteLegal == 0) || ((blackDisks | whiteDisks) == UNIVERSE);
 }
 
 int OthelloGameBoard::countPieces(OthelloColor color) {
@@ -173,6 +141,7 @@ uint64_t OthelloGameBoard::generateMoves(long playerDisks, long oppDisks) {
         }
     }
 
+    // 0 if no legal moves can be made.
     return moveMask;
 }
 
@@ -186,6 +155,7 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
 
     uint64_t move = 1LL << newPos;
     uint64_t f_fin = 0LL;
+
     uint64_t possibility;
 
     for(int i = 0; i < DIRECTION_COUNT; i++) {

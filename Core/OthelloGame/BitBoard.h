@@ -5,7 +5,9 @@
 #ifndef OTHELLOPROJECT_CPP_BITBOARD_H
 #define OTHELLOPROJECT_CPP_BITBOARD_H
 
+#include <algorithm>
 #include <array>
+
 #include "../Logger.h"
 #include "OthelloColor.h"
 

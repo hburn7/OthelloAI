@@ -15,13 +15,6 @@ int Agent::selectMove(uint64_t possibilities) {
         }
     }
 
-    return -1; // Pass
-}
-
-void Agent::setBitBoard(BitBoard board) {
-    this->m_board = board;
-}
-
-BitBoard Agent::getBitBoard() {
-    return this->m_board;
+    // Pass if no possible moves are available
+    return -1;
 }

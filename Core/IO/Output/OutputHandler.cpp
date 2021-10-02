@@ -2,10 +2,9 @@
 // Created by Harry Burnett on 8/29/21.
 //
 
-#include <iostream>
-#include "../Input/InputHandler.h"
+
 #include "OutputHandler.h"
-#include "../../Logger.h"
+
 
 void OutputHandler::outputDirective(Directive d, const std::string &input) {
     switch(d) {
@@ -19,24 +18,15 @@ void OutputHandler::outputDirective(Directive d, const std::string &input) {
         case Directive::PassBlack:
         case Directive::PassWhite:
         case Directive::Comment:
-        case Directive::EndGame:
             std::cout << input << std::endl;
-            break;
-        case Directive::Invalid:
-            // Any input not detected by referee will cancel the game immediately.
-            // Whatever is output here is arbitrary.
-            std::cout << "<INVALID>" << std::endl;
-//            std::cout << input << std::endl;
             break;
     }
 }
 
 std::string OutputHandler::getMoveOutput(OthelloColor c, int pos) {
-    char colorChar = c == Black ? 'B' : 'W';
 
     // Pass
     if(pos < 0 || pos > 63) {
-        // C++ doesn't like returning std::to_string(colorChar)...
         return c == Black ? "B" : "W";
     }
 
@@ -44,6 +34,8 @@ std::string OutputHandler::getMoveOutput(OthelloColor c, int pos) {
 
     int row = std::get<0>(rowCol);
     char col = std::get<1>(rowCol);
+
+    char colorChar = c == Black ? 'B' : 'W';
 
     // Definitely overkill allocating 255, but we don't want to run into any unforseen errors due to the
     // string size being too small. So, this is just a safety measure. It's freed at the end anyway.

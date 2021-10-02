@@ -13,7 +13,6 @@ enum Directive {
     PassBlack,
     PassWhite,
     Comment,
-    EndGame,
     Invalid
 };
 

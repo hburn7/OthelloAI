@@ -2,9 +2,7 @@
 // Created by Harry Burnett on 8/29/21.
 //
 
-#include <algorithm>
 #include "BitBoard.h"
-#include "OthelloGameBoard.h"
 
 #define BLACK_BITS 0x0000000810000000
 #define WHITE_BITS 0x0000001008000000
@@ -41,10 +39,6 @@ BitBoard::BitBoard(const BitBoard &oldBoard, uint64_t bits) {
 
 OthelloColor BitBoard::getColor() {
     return this->color;
-}
-
-std::array<std::array<int, 8>, 8> BitBoard::arrayRepresentation() {
-    return OthelloGameBoard::binaryToArray(this->getBits());
 }
 
 uint64_t BitBoard::getBits() {

@@ -17,35 +17,40 @@ int main(int argc, char* argv[]) {
     // Init both sides.
     BitBoard agentBoard = BitBoard(Black);
     BitBoard playerBoard = BitBoard(White);
+
     OthelloGameBoard gameBoard = OthelloGameBoard(agentBoard, playerBoard);
 
     Logger::logComment("Gameboard initialized.");
     gameBoard.drawBoard();
 
-    auto input = InputHandler::readInput();
-    auto directive = InputHandler::identifyDirective(input, Black);
-
     OthelloColor agentColor = Black;
     OthelloColor playerColor = White;
 
-    Logger::logComment("Initializing playerAgent selection");
-    Logger::logComment("Please initialize the agent color.");
+    std::string input;
+    Directive directive;
 
-    if(directive == Directive::InitializeBlack) {
-        Logger::logComment("Got it! I will play as black, you will play as white.");
-        // Computer is already predefined as black, so we don't need to change anything.
-    } else if(directive == Directive::InitializeWhite) {
-        Logger::logComment("Got it! I will play as white, you will play as black.");
+    while(true) {
+        Logger::logComment("Please initialize the agent color [I B] or [I W].");
 
-        agentColor = White;
-        playerColor = Black;
+        input = InputHandler::readInput();
+        directive = InputHandler::identifyDirective(input, Black);
 
-        BitBoard copyAgent = agentBoard;
-        agentBoard = playerBoard;
-        playerBoard = copyAgent;
-    } else {
-        Logger::logComment("Something went wrong during initialization!");
-        return EXIT_FAILURE;
+        if(directive == Directive::InitializeBlack) {
+            Logger::logComment("Got it! I will play as black, you will play as white.");
+            // Computer is already predefined as black, so we don't need to change anything.
+
+            break;
+        } else if(directive == Directive::InitializeWhite) {
+            Logger::logComment("Got it! I will play as white, you will play as black.");
+
+            agentColor = White;
+            playerColor = Black;
+
+            break;
+        } else {
+            Logger::logComment("Something went wrong during initialization!");
+            Logger::logComment("Expected: 'I B' or 'I W' -- received: " + input);
+        }
     }
 
     OutputHandler::outputDirective(directive, input);
@@ -72,29 +77,43 @@ int main(int argc, char* argv[]) {
         // Agent makes a move.
         if(agentTurn) {
             uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
-            int selection = agent.selectMove(possibleMoves);
+            int move = agent.selectMove(possibleMoves);
 
-            if(selection >= 0) {
-                gameBoard.applyMove(agentColor, selection);
+            // Apply move to board if not passing
+            if(move >= 0) {
+                gameBoard.applyMove(agentColor, move);
             }
 
-            input = OutputHandler::getMoveOutput(agentColor, selection);
+            input = OutputHandler::getMoveOutput(agentColor, move);
             newDirective = InputHandler::identifyDirective(input, agentColor);
         }
         else
         {
             int move;
+            uint64_t possibleMoves = gameBoard.generateMoves(playerBoard.getBits(), agentBoard.getBits());
 
             if(interactive) {
                 // Player prompted to make a move
                 input = InputHandler::readInput();
                 move = OutputHandler::toPos(input);
+
+                // Compare player move to any legal move. We do not allow illegal moves.
+                bool valid;
+                do {
+                    Logger::logComment("Invalid move, please try again.");
+
+                    input = InputHandler::readInput();
+                    move = OutputHandler::toPos(input);
+
+                    valid = ((1LL << move) & possibleMoves) != 0;
+                } while(!valid);
+
             } else {
-                // "Player" agent makes a move
-                uint64_t possibleMoves = gameBoard.generateMoves(playerBoard.getBits(), agentBoard.getBits());
+                // "Player" agent makes a move if not interactive
                 move = playerAgent.selectMove(possibleMoves);
             }
 
+            // Apply move to board if not passing.
             if(move >= 0) {
                 gameBoard.applyMove(playerColor, move);
             }
@@ -106,15 +125,6 @@ int main(int argc, char* argv[]) {
         // Output
         if(agentTurn) {
             OutputHandler::outputDirective(newDirective, input);
-        }
-
-        if(newDirective == Directive::EndGame) {
-            // Score would have been printed by outputDirective.
-            if(gameBoard.isGameComplete()) {
-                return EXIT_SUCCESS;
-            }
-
-            return EXIT_FAILURE;
         }
 
         if(newDirective == Directive::Invalid) {

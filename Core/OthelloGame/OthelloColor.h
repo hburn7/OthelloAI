@@ -10,5 +10,4 @@ enum OthelloColor {
     White
 };
 
-
 #endif //OTHELLOPROJECT_CPP_OTHELLOCOLOR_H

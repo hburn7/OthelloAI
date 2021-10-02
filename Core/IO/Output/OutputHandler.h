@@ -5,11 +5,14 @@
 #ifndef OTHELLOPROJECT_CPP_OUTPUTHANDLER_H
 #define OTHELLOPROJECT_CPP_OUTPUTHANDLER_H
 
+#include <array>
+#include <iostream>
+#include <string.h>
+
 #include "../Directive.h"
 #include "../../OthelloGame/OthelloColor.h"
 #include "../../Utils.h"
-#include <string.h>
-#include <array>
+#include "../../Logger.h"
 
 class OutputHandler {
 public:
@@ -27,6 +30,12 @@ public:
      * @return
      */
     static int toPos(std::string input);
+    /**
+     * Returns a referee-compatible std::string representing a move for the given color and position on the board.
+     * @param c The color of the player making the move
+     * @param pos The position on the board, ranged 0-63 inclusive, to move to.
+     * @return A referee-compatible std::string representing this move.
+     */
     static std::string getMoveOutput(OthelloColor c, int pos);
 };
 
