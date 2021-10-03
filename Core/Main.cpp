@@ -11,6 +11,8 @@
 #include "OthelloGame/BitBoard.h"
 #include "OthelloGame/OthelloGameBoard.h"
 
+#define MAX_DEPTH 10
+
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
 
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]) {
 
         // Agent makes a move.
         if(agentTurn) {
-            int move = gameBoard.selectMove(agentBoard.getBits(), playerBoard.getBits());
+            int move = gameBoard.selectMove(agentBoard.getBits(), playerBoard.getBits(), MAX_DEPTH);
 
             // Apply move to board if not passing
             if(move >= 0) {
@@ -106,7 +108,7 @@ int main(int argc, char* argv[]) {
 
             } else {
                 // "Player" (agent) makes a move if not interactive
-                move = gameBoard.selectMove(playerBoard.getBits(), agentBoard.getBits());
+                move = gameBoard.selectMove(playerBoard.getBits(), agentBoard.getBits(), MAX_DEPTH);
             }
 
             // Apply move to board if not passing.

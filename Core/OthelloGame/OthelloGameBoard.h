@@ -41,9 +41,10 @@ public:
      * Selects a move for the given player.
      * @param playerDisks The disks belonging to the player the move is generated for.
      * @param opponentDisks The disks belonging to the opponent player.
+     * @param maxDepth The maximum depth to search down the game tree.
      * @return An optimal move, using minimax and alpha-beta pruning.
      */
-    int selectMove(uint64_t playerDisks, uint64_t opponentDisks);
+    int selectMove(uint64_t playerDisks, uint64_t opponentDisks, int maxDepth);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param color The color of the player we are applying this move for.
@@ -91,14 +92,15 @@ private:
     /**
      * Performs a minimax search algorithm, producing a game tree, using alpha-beta pruning.
      * @param pos Board position we are currently inspecting.
-     * @param depth The amount of depth left to search.
+     * @param depth The current search depth.
+     * @param maxDepth The maximum depth to search.
      * @param alpha Best possible score maximizing player can achieve.
      * @param beta Best possible score minimizing player can achieve.
      * @param max Whether we are evaluating the maximimizing player or minimizing player.
      * @param playerDisks The player's disks as they appear down the tree.
      * @param opponentDisks The opponent's disks as they appear down the tree.
      */
-    int minimax(uint64_t playerDisks, uint64_t opponentDisks, int depth, int alpha, int beta, bool max);
+    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool max);
     /**
       * Scores the given board state and returns the value.
       * A positive score means the board at the given configuration favors the agent.
