@@ -59,9 +59,6 @@ int main(int argc, char* argv[]) {
     bool playAsBlack = agentColor == Black;
     bool blackTurn = true;
 
-    Agent agent = Agent(agentColor);
-    Agent playerAgent = Agent(playerColor);
-
     while(!gameBoard.isGameComplete()) {
         agentBoard = agentColor == Black ? gameBoard.getBlack() : gameBoard.getWhite();
         playerBoard = playerColor == Black ? gameBoard.getBlack() : gameBoard.getWhite();
@@ -69,16 +66,14 @@ int main(int argc, char* argv[]) {
         std::string prompt = blackTurn ? "Black turn" : "White turn";
         Logger::logComment(prompt);
 
-        std::string input;
         Directive newDirective;
 
         bool agentTurn = playAsBlack && blackTurn || !playAsBlack && !blackTurn;
 
         // Agent makes a move.
         if(agentTurn) {
-            //uint64_t possibleMoves = gameBoard.generateMoves(agentBoard.getBits(), playerBoard.getBits());
-//            int move = agent.selectMove(possibleMoves);
             int move = gameBoard.selectMove(agentBoard.getBits(), playerBoard.getBits());
+
             // Apply move to board if not passing
             if(move >= 0) {
                 gameBoard.applyMove(agentColor, move);
@@ -97,8 +92,9 @@ int main(int argc, char* argv[]) {
                 input = InputHandler::readInput();
                 move = OutputHandler::toPos(input);
 
-                // Compare player move to any legal move. We do not allow illegal moves.
-                bool valid = possibleMoves > 0 && ((1LL << move) & possibleMoves) != 0;
+                // Compare player move to any legal move. We do not allow illegal moves.        -- Checks for legal pass --
+                bool valid = (possibleMoves > 0 && ((1LL << move) & possibleMoves) != 0) || (move == -1 && possibleMoves == 0);
+
                 while(!valid) {
                     Logger::logComment("Invalid move, please try again.");
 
@@ -109,8 +105,7 @@ int main(int argc, char* argv[]) {
                 }
 
             } else {
-                // "Player" agent makes a move if not interactive
-//                move = playerAgent.selectMove(possibleMoves);
+                // "Player" (agent) makes a move if not interactive
                 move = gameBoard.selectMove(playerBoard.getBits(), agentBoard.getBits());
             }
 
