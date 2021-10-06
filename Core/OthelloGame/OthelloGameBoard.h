@@ -6,12 +6,14 @@
 #define OTHELLOPROJECT_CPP_OTHELLOGAMEBOARD_H
 
 #include <bitset>
+#include <chrono>
 #include <math.h>
 #include <vector>
 
 #include "BitBoard.h"
 #include "../Utils.h"
 #include "../Agent/Agent.h"
+#include "../IO/Output/OutputHandler.h"
 
 /**
  * Represents the entire gameboard for both black and white. When working
@@ -39,12 +41,13 @@ public:
     uint64_t generateMoves(long playerDisks, long oppDisks);
     /**
      * Selects a move for the given player.
+     * @param playerColor The color of the player.
      * @param playerDisks The disks belonging to the player the move is generated for.
      * @param opponentDisks The disks belonging to the opponent player.
      * @param maxDepth The maximum depth to search down the game tree.
      * @return An optimal move, using minimax and alpha-beta pruning.
      */
-    int selectMove(uint64_t playerDisks, uint64_t opponentDisks, int maxDepth);
+    int selectMove(OthelloColor playerColor, uint64_t playerDisks, uint64_t opponentDisks, int maxDepth);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param color The color of the player we are applying this move for.
@@ -72,9 +75,16 @@ public:
      * @return The number of pieces occupied
      */
     int countPieces(OthelloColor color);
+    /**
+     * @return Total amount of set bits in the provided data.
+     */
+    int countBits(uint64_t bits);
 private:
     BitBoard m_black;
     BitBoard m_white;
+
+    int m_blackSecondsRemaining;
+    int m_whiteSecondsRemaining;
 
     /**
      * Returns a bitboard for a given color.
@@ -91,16 +101,21 @@ private:
     void lineCap(OthelloColor color, int newPos);
     /**
      * Performs a minimax search algorithm, producing a game tree, using alpha-beta pruning.
-     * @param pos Board position we are currently inspecting.
      * @param depth The current search depth.
      * @param maxDepth The maximum depth to search.
      * @param alpha Best possible score maximizing player can achieve.
      * @param beta Best possible score minimizing player can achieve.
-     * @param max Whether we are evaluating the maximimizing player or minimizing player.
+     * @param maximizingPlayer Whether we are evaluating the maximizing player or minimizing player.
      * @param playerDisks The player's disks as they appear down the tree.
      * @param opponentDisks The opponent's disks as they appear down the tree.
      */
-    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool max);
+    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool maximizingPlayer);
+    /**
+     * Helper function to return a vector of board positions for a given board state.
+     * @param pos
+     * @return
+     */
+    std::vector<int> getMovesAsVector(uint64_t state);
     /**
       * Scores the given board state and returns the value.
       * A positive score means the board at the given configuration favors the agent.

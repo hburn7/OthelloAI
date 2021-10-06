@@ -11,7 +11,7 @@
 #include "OthelloGame/BitBoard.h"
 #include "OthelloGame/OthelloGameBoard.h"
 
-#define MAX_DEPTH 10
+#define MAX_DEPTH 8
 
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
@@ -74,14 +74,14 @@ int main(int argc, char* argv[]) {
 
         // Agent makes a move.
         if(agentTurn) {
-            int move = gameBoard.selectMove(agentBoard.getBits(), playerBoard.getBits(), MAX_DEPTH);
+            int move = gameBoard.selectMove(agentColor, agentBoard.getBits(), playerBoard.getBits(), MAX_DEPTH);
 
             // Apply move to board if not passing
             if(move >= 0) {
                 gameBoard.applyMove(agentColor, move);
             }
 
-            input = OutputHandler::getMoveOutput(agentColor, move);
+            input = OutputHandler::getMoveOutput(agentColor, move, true);
             newDirective = InputHandler::identifyDirective(input, agentColor);
         }
         else
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
             } else {
                 // "Player" (agent) makes a move if not interactive
-                move = gameBoard.selectMove(playerBoard.getBits(), agentBoard.getBits(), MAX_DEPTH);
+                move = gameBoard.selectMove(playerColor, playerBoard.getBits(), agentBoard.getBits(), MAX_DEPTH);
             }
 
             // Apply move to board if not passing.
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
                 gameBoard.applyMove(playerColor, move);
             }
 
-            input = OutputHandler::getMoveOutput(playerColor, move);
+            input = OutputHandler::getMoveOutput(playerColor, move, true);
             newDirective = InputHandler::identifyDirective(input, playerColor);
         }
 
