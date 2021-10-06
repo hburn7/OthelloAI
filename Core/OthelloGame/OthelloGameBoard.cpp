@@ -227,7 +227,7 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
 }
 
 int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
-    double p = 0, c = 0, l = 0, m = 0, d = 0; // todo: rename variables
+    int p = 0, c = 0, l = 0, m = 0, d = 0; // todo: rename variables
 
     int countPlayer = this->countBits(playerDisks);
     int countOpponent = this->countBits(opponentDisks);
@@ -268,6 +268,9 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
 
     // Corner closeness (these are bad spots to be in)
     l = -(12.5 * (playerAdjacentCornerBitset.count() - opponentAdjacentCornerBitset.count()));
+    if(l == INT32_MIN) {
+        l = 0;
+    }
 
     // Mobility
     if(countMovesPlayer > countMovesOpponent) {
@@ -283,44 +286,43 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
     return (int)score;
 }
 
-int OthelloGameBoard::minimax(uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth,
+int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth,
                               int alpha, int beta, bool maximizingPlayer) {
 
-    uint64_t children = maximizingPlayer
-            ? this->generateMoves(playerDisks, opponentDisks)
-            : this->generateMoves(opponentDisks, playerDisks);
-
-    std::vector<int> childVector = this->getMovesAsVector(children);
-
-    if(depth == maxDepth || children == 0 || this->isGameComplete(playerDisks, opponentDisks)) {
+    if(depth == maxDepth || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
     }
 
     if(maximizingPlayer) {
         int maxEval = INT32_MIN;
+        playerDisks |= (1LL << pos);
+
+        uint64_t children = this->generateMoves(playerDisks, opponentDisks);
+        auto childVector = this->getMovesAsVector(children);
 
         for(int child : childVector) {
-            playerDisks |= (1LL << child);
-            int eval = minimax(playerDisks, opponentDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
+            int eval = minimax(child, playerDisks, opponentDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
             maxEval = std::max(maxEval, eval);
-            alpha = std::max(alpha, eval);
+            alpha = std::max(alpha, maxEval);
 
             if(beta <= alpha) {
                 break;
             }
         }
 
-        // todo: fix bug(s) where maxEval is returned while it is still equal to INT32_MIN
         return maxEval;
     } else {
         int minEval = INT32_MAX;
+        opponentDisks |= (1LL << pos);
+
+        uint64_t children = this->generateMoves(opponentDisks, playerDisks);
+        auto childVector = this->getMovesAsVector(children);
 
         for(int child : childVector) {
-            opponentDisks |= (1LL << child);
-            int eval = minimax(opponentDisks, playerDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
+            int eval = minimax(child, playerDisks, opponentDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
             minEval = std::min(minEval, eval);
-            beta = std::min(beta, eval);
+            beta = std::min(minEval, beta);
 
             if(beta <= alpha) {
                 break;
@@ -351,7 +353,7 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
     std::cout << "C All possible moves: ";
 
     for(int child : pChildren) {
-        int evaluation = minimax(playerDisks | (1LL << child), opponentDisks, 1, maxDepth, INT32_MIN, INT32_MAX, true);
+        int evaluation = minimax(child, playerDisks, opponentDisks, 1, maxDepth, INT32_MIN, INT32_MAX, true);
         evaluations.push_back(evaluation);
     }
 

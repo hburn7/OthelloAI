@@ -109,7 +109,7 @@ private:
      * @param playerDisks The player's disks as they appear down the tree.
      * @param opponentDisks The opponent's disks as they appear down the tree.
      */
-    int minimax(uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool maximizingPlayer);
+    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool maximizingPlayer);
     /**
      * Helper function to return a vector of board positions for a given board state.
      * @param pos
