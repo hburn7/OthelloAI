@@ -34,9 +34,10 @@ public:
      * Returns a referee-compatible std::string representing a move for the given color and position on the board.
      * @param c The color of the player making the move
      * @param pos The position on the board, ranged 0-63 inclusive, to move to.
+     * @param logComment Whether to also log a debug comment about the position to string conversion
      * @return A referee-compatible std::string representing this move.
      */
-    static std::string getMoveOutput(OthelloColor c, int pos);
+    static std::string getMoveOutput(OthelloColor c, int pos, bool logComment);
 };
 
 

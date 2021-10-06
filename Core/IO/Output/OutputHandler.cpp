@@ -23,7 +23,7 @@ void OutputHandler::outputDirective(Directive d, const std::string &input) {
     }
 }
 
-std::string OutputHandler::getMoveOutput(OthelloColor c, int pos) {
+std::string OutputHandler::getMoveOutput(OthelloColor c, int pos, bool logComment) {
 
     // Pass
     if(pos < 0 || pos > 63) {
@@ -42,7 +42,9 @@ std::string OutputHandler::getMoveOutput(OthelloColor c, int pos) {
     char *str = (char *) malloc(sizeof(char) * 255);
     sprintf(str, "%c %c %d", colorChar, col, row);
 
-    Logger::logComment("DEBUG: Converted pos " + std::to_string(pos) + " to " + str);
+    if(logComment) {
+        Logger::logComment("Converted pos " + std::to_string(pos) + " to " + str);
+    }
 
     std::string ret = std::string(str);
     free(str);
@@ -58,11 +60,11 @@ int OutputHandler::toPos(std::string input) {
 
     if(pos < 0 || pos > 63) {
         // Can happen if we try to convert a standalone letter. e.g. W or B
-        Logger::logComment("DEBUG: Received input '" + input + "'. Returning pos -1!");
+        Logger::logComment("Received input '" + input + "'. Returning pos -1!");
         return -1;
     }
 
-    Logger::logComment("DEBUG: Converted " + input + " to pos: " + std::to_string(pos));
+    Logger::logComment("Converted " + input + " to pos: " + std::to_string(pos));
 
     return pos;
 }
