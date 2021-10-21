@@ -15,12 +15,16 @@
 
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
+    int gameTime = argc > 2 ? std::stoi(argv[2]) : 600;
+
+    // Init config
+    Config cfg = Config(gameTime);
 
     // Init both sides.
     BitBoard agentBoard = BitBoard(Black);
     BitBoard playerBoard = BitBoard(White);
 
-    OthelloGameBoard gameBoard = OthelloGameBoard(agentBoard, playerBoard);
+    OthelloGameBoard gameBoard = OthelloGameBoard(cfg, agentBoard, playerBoard);
 
     Logger::logComment("Gameboard initialized.");
     gameBoard.drawBoard();

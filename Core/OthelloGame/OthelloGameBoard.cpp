@@ -34,7 +34,7 @@ const std::array<int, 64> WEIGHT_MAP = {
         20, -7, 11, 8, 8, 11, -7, 20
 };
 
-OthelloGameBoard::OthelloGameBoard(BitBoard black, BitBoard white) : m_black(black), m_white(white) {}
+OthelloGameBoard::OthelloGameBoard(Config cfg, BitBoard black, BitBoard white) : m_black(black), m_white(white), m_cfg(cfg) {}
 
 void OthelloGameBoard::drawBoard() {
     drawBoard(this->getBlack().getBits(), this->getWhite().getBits());
@@ -74,6 +74,14 @@ BitBoard OthelloGameBoard::getBlack() {
 
 BitBoard OthelloGameBoard::getWhite() {
     return this->m_white;
+}
+
+const Config &OthelloGameBoard::getCfg() const {
+    return this->m_cfg;
+}
+
+void OthelloGameBoard::setCfg(const Config &mCfg) {
+    this->m_cfg = mCfg;
 }
 
 void OthelloGameBoard::applyMove(OthelloColor color, int pos) {

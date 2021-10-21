@@ -9,4 +9,4 @@ add_executable(OthelloProject_cpp Core/Main.cpp Core/Logger.cpp Core/Utils.cpp
         Core/OthelloGame/BitBoard.cpp Core/OthelloGame/OthelloGameBoard.cpp
         Core/IO/Input/InputHandler.cpp Core/IO/Output/OutputHandler.cpp
         Core/Agent/Agent.cpp
-)
+        Core/Config.cpp Core/Config.h)
