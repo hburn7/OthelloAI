@@ -108,16 +108,17 @@ private:
     void lineCap(OthelloColor color, int newPos);
     /**
      * Performs a minimax search algorithm, producing a game tree, using alpha-beta pruning.
-     * @param pos 
-     * @param playerDisks
-     * @param opponentDisks
-     * @param timeRemaining
-     * @param alpha
-     * @param beta
-     * @param maximizingPlayer
-     * @return
+     * @param pos The position to evaluate
+     * @param playerDisks Player disks as they exist at the current depth (starting depth is 0)
+     * @param opponentDisks Opponent disks as they exist at the current depth (starting depth is 0)
+     * @param depth The current depth of the search - initial call is always 1
+     * @param timeRemaining Time remaining for the iterative deepning. Default is specified in Config
+     * @param alpha Alpha value for alpha-beta algorithm - default is negative infinity
+     * @param beta Beta value for alpha-beta algorithm - default is positive infinity
+     * @param maximizingPlayer Whether the current player is maximizing - initial call is always true regardless of player.
+     * @return Evaluation of gameboard at pos down to an arbitrary depth (using iterative deepening).
      */
-    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int timeRemaining, int alpha, int beta, bool maximizingPlayer);
+    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int timeRemaining, int alpha, int beta, bool maximizingPlayer);
     /**
      * Helper function to return a priority queue of board positions for a given board state.
      * @return A priority queue of integer pairs where the first integer in the pair is the weight of the move and

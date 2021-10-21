@@ -150,7 +150,7 @@ uint64_t OthelloGameBoard::generateMoves(long playerDisks, long oppDisks) {
         // Find strings of 1 to 6 opponent disks that are adjacent
         // to the player in the current direction. Previous statement
         // has found the first opponent disk.
-
+`
         for(int j = 0; ((j < 6) & (holdMask != 0LL)); j++) {
             if(DIR_INCREMENTS[i] > 0) {
                 holdMask = (holdMask << DIR_INCREMENTS[i]) & DIR_MASKS[i];
@@ -283,9 +283,10 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
     return score;
 }
 
-int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth,
-                              int alpha, int beta, bool maximizingPlayer) {
+int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks,
+                              int timeRemaining, int alpha, int beta, bool maximizingPlayer) {
 
+    // Todo: Time, iterative deepening
     if(depth == maxDepth || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
@@ -366,11 +367,13 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
 
     std::cout << "C All possible moves: ";
 
+    int executionTime = this->getCfg().getMoveTime() / pChildren.size();
     while(!pChildren.empty()) {
         auto nextBest = pChildren.top();
         pChildren.pop();
 
-        int evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 1, maxDepth, INT32_MIN, INT32_MAX, true);
+
+        int evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 1, executionTime, INT32_MIN, INT32_MAX, true);
         evaluations.push(std::pair<int, int>(evaluation, nextBest.second));
     }
 
