@@ -8,6 +8,7 @@
 #include <bitset>
 #include <chrono>
 #include <math.h>
+#include <queue>
 #include <vector>
 
 #include "BitBoard.h"
@@ -111,11 +112,11 @@ private:
      */
     int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int alpha, int beta, bool maximizingPlayer);
     /**
-     * Helper function to return a vector of board positions for a given board state.
-     * @param pos
-     * @return
+     * Helper function to return a priority queue of board positions for a given board state.
+     * @return A priority queue of integer pairs where the first integer in the pair is the weight of the move and
+     * the second int is the position on the board to move to.
      */
-    std::vector<int> getMovesAsVector(uint64_t state);
+    std::priority_queue<std::pair<int, int>> getMovesAsPriorityQueue(uint64_t state);
     /**
       * Scores the given board state and returns the value.
       * A positive score means the board at the given configuration favors the agent.
