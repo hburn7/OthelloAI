@@ -11,7 +11,7 @@
 #include "OthelloGame/BitBoard.h"
 #include "OthelloGame/OthelloGameBoard.h"
 
-#define MAX_DEPTH 8
+#define MAX_DEPTH 10
 
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
