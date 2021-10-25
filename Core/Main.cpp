@@ -14,23 +14,23 @@
 #define MAX_DEPTH 10
 
 int main(int argc, char* argv[]) {
-    bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
+    bool interactive = argc > 1 && strcmp(argv[1], "-m_interactive") == 0;
     int gameTime = argc > 2 ? std::stoi(argv[2]) : 600;
 
     // Init config
-    Config cfg = Config(gameTime);
+    Config cfg = Config(interactive, gameTime);
 
     // Init both sides.
-    BitBoard agentBoard = BitBoard(Black);
-    BitBoard playerBoard = BitBoard(White);
+    OthelloColor agentColor = Black;
+    OthelloColor playerColor = White;
+
+    BitBoard agentBoard = BitBoard(agentColor);
+    BitBoard playerBoard = BitBoard(playerColor);
 
     OthelloGameBoard gameBoard = OthelloGameBoard(cfg, agentBoard, playerBoard);
 
     Logger::logComment("Gameboard initialized.");
     gameBoard.drawBoard();
-
-    OthelloColor agentColor = Black;
-    OthelloColor playerColor = White;
 
     std::string input;
     Directive directive;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
             int move;
             uint64_t possibleMoves = gameBoard.generateMoves(playerBoard.getBits(), agentBoard.getBits());
 
-            if(interactive) {
+            if(cfg.isInteractive()) {
                 // Player prompted to make a move
                 input = InputHandler::readInput();
                 move = OutputHandler::toPos(input);
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
                 }
 
             } else {
-                // "Player" (agent) makes a move if not interactive
+                // "Player" (agent) makes a move if not m_interactive
                 move = gameBoard.selectMove(playerColor, playerBoard.getBits(), agentBoard.getBits(), MAX_DEPTH);
             }
 

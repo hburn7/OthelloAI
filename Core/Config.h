@@ -8,13 +8,17 @@
 
 class Config {
 public:
-    Config(int game_time);
+    Config(bool interactive, int game_time);
+
+    bool isInteractive() const;
+    void setInteractive(bool interactive);
 
     int getMoveTime() const;
-    int getTimeRemaining() const;
 
+    int getTimeRemaining() const;
     void setTimeRemaining(int mTimeRemaining);
 private:
+    bool m_interactive;
     int m_move_time;
     int m_time_remaining;
 };

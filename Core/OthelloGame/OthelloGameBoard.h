@@ -69,7 +69,6 @@ public:
     BitBoard getWhite();
 
     const Config &getCfg() const;
-    void setCfg(const Config &mCfg);
     /**
      * Returns true if the game is complete, false if the game is ongoing.
      * Uses the total count of occupied cells on the board to determine this.

@@ -80,10 +80,6 @@ const Config &OthelloGameBoard::getCfg() const {
     return this->m_cfg;
 }
 
-void OthelloGameBoard::setCfg(const Config &mCfg) {
-    this->m_cfg = mCfg;
-}
-
 void OthelloGameBoard::applyMove(OthelloColor color, int pos) {
     BitBoard board = getBoard(color);
     board = board.setCellState(pos);
@@ -150,7 +146,6 @@ uint64_t OthelloGameBoard::generateMoves(long playerDisks, long oppDisks) {
         // Find strings of 1 to 6 opponent disks that are adjacent
         // to the player in the current direction. Previous statement
         // has found the first opponent disk.
-`
         for(int j = 0; ((j < 6) & (holdMask != 0LL)); j++) {
             if(DIR_INCREMENTS[i] > 0) {
                 holdMask = (holdMask << DIR_INCREMENTS[i]) & DIR_MASKS[i];
@@ -378,10 +373,8 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
     }
 
     // Iterate through child/evaluation score pairs and select best.
-
     auto retBest = evaluations.top();
 
-    // Todo: Technically, unnecessary debug statements could be removed.
     while(!evaluations.empty()) {
         auto best = evaluations.top();
         evaluations.pop();
