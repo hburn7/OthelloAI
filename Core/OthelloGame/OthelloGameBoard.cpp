@@ -278,11 +278,13 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
     return score;
 }
 
-int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks,
-                              int timeRemaining, int alpha, int beta, bool maximizingPlayer) {
+int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth,
+                              uint64_t startTime, uint64_t timeRemaining, int alpha, int beta, bool maximizingPlayer) {
+    uint64_t currentSysTime = getCurrentSysTime();
+    timeRemaining -= (currentSysTime - startTime);
 
     // Todo: Time, iterative deepening
-    if(depth == maxDepth || this->isGameComplete(playerDisks, opponentDisks)) {
+    if(timeRemaining <= 0 || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
     }
@@ -299,10 +301,12 @@ int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDi
         }
 
         while(!childQueue.empty()) {
+            currentSysTime = getCurrentSysTime();
+
             auto curBest = childQueue.top();
             childQueue.pop();
 
-            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
+            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, currentSysTime, timeRemaining, alpha, beta, !maximizingPlayer);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, maxEval);
 
@@ -324,10 +328,12 @@ int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDi
         }
 
         while(!childQueue.empty()) {
+            currentSysTime = getCurrentSysTime();
+
             auto curBest = childQueue.top();
             childQueue.pop();
 
-            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, maxDepth, alpha, beta, !maximizingPlayer);
+            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, currentSysTime, timeRemaining, alpha, beta, !maximizingPlayer);
             minEval = std::min(minEval, eval);
             beta = std::min(minEval, beta);
 
@@ -400,4 +406,8 @@ std::priority_queue<std::pair<int, int>> OthelloGameBoard::getMovesAsPriorityQue
     }
 
     return pQueue;
+}
+
+long OthelloGameBoard::getCurrentSysTime() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
