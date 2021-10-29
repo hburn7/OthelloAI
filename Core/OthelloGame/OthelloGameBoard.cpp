@@ -279,13 +279,13 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
 }
 
 int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth,
-                              uint64_t startTime, uint64_t timeRemaining, int alpha, int beta, bool maximizingPlayer) {
+                              uint64_t startTime, int64_t timeRemaining, int alpha, int beta, bool maximizingPlayer) {
     uint64_t currentSysTime = getCurrentSysTime();
 
     timeRemaining -= (currentSysTime - startTime);
 
     // Todo: Time, iterative deepening
-    if(timeRemaining > 5000 || this->isGameComplete(playerDisks, opponentDisks)) {
+    if(timeRemaining < 0 || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
     }
@@ -365,10 +365,11 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
 
     std::cout << "C All possible moves: ";
 
-    uint64_t executionTime = this->getCurrentSysTime();
-    uint64_t timeRemaining = this->getCfg().getMoveTime() / pChildren.size() * 1000;
+    uint64_t timeRemaining = (this->getCfg().getMoveTime() / pChildren.size()) * 1000;
 
     while(!pChildren.empty()) {
+        uint64_t executionTime = this->getCurrentSysTime();
+
         auto nextBest = pChildren.top();
         pChildren.pop();
 
