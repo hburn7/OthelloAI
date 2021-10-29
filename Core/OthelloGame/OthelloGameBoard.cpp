@@ -281,10 +281,11 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
 int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth,
                               uint64_t startTime, uint64_t timeRemaining, int alpha, int beta, bool maximizingPlayer) {
     uint64_t currentSysTime = getCurrentSysTime();
+
     timeRemaining -= (currentSysTime - startTime);
 
     // Todo: Time, iterative deepening
-    if(timeRemaining <= 0 || this->isGameComplete(playerDisks, opponentDisks)) {
+    if(timeRemaining > 5000 || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
     }
@@ -301,12 +302,10 @@ int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDi
         }
 
         while(!childQueue.empty()) {
-            currentSysTime = getCurrentSysTime();
-
             auto curBest = childQueue.top();
             childQueue.pop();
 
-            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, currentSysTime, timeRemaining, alpha, beta, !maximizingPlayer);
+            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, startTime, timeRemaining, alpha, beta, !maximizingPlayer);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, maxEval);
 
@@ -328,12 +327,10 @@ int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDi
         }
 
         while(!childQueue.empty()) {
-            currentSysTime = getCurrentSysTime();
-
             auto curBest = childQueue.top();
             childQueue.pop();
 
-            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, currentSysTime, timeRemaining, alpha, beta, !maximizingPlayer);
+            int eval = minimax(curBest.second, playerDisks, opponentDisks, depth + 1, startTime, timeRemaining, alpha, beta, !maximizingPlayer);
             minEval = std::min(minEval, eval);
             beta = std::min(minEval, beta);
 
@@ -368,13 +365,14 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
 
     std::cout << "C All possible moves: ";
 
-    int executionTime = this->getCfg().getMoveTime() / pChildren.size();
+    uint64_t executionTime = this->getCurrentSysTime();
+    uint64_t timeRemaining = this->getCfg().getMoveTime() / pChildren.size() * 1000;
+
     while(!pChildren.empty()) {
         auto nextBest = pChildren.top();
         pChildren.pop();
 
-
-        int evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 1, executionTime, INT32_MIN, INT32_MAX, true);
+        int evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 1, executionTime, timeRemaining, INT32_MIN, INT32_MAX, true);
         evaluations.push(std::pair<int, int>(evaluation, nextBest.second));
     }
 

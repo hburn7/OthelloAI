@@ -14,7 +14,7 @@
 #define MAX_DEPTH 10
 
 int main(int argc, char* argv[]) {
-    bool interactive = argc > 1 && strcmp(argv[1], "-m_interactive") == 0;
+    bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
     int gameTime = argc > 2 ? std::stoi(argv[2]) : 600;
 
     // Init config
