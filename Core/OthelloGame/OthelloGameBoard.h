@@ -47,10 +47,9 @@ public:
      * @param playerColor The color of the player.
      * @param playerDisks The disks belonging to the player the move is generated for.
      * @param opponentDisks The disks belonging to the opponent player.
-     * @param maxDepth The maximum depth to search down the game tree.
      * @return An optimal move, using minimax and alpha-beta pruning.
      */
-    int selectMove(OthelloColor playerColor, uint64_t playerDisks, uint64_t opponentDisks, int maxDepth);
+    int selectMove(OthelloColor playerColor, uint64_t playerDisks, uint64_t opponentDisks);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param color The color of the player we are applying this move for.
@@ -118,7 +117,8 @@ private:
      * @param maximizingPlayer Whether the current player is maximizing - initial call is always true regardless of player.
      * @return Evaluation of gameboard at pos down to an arbitrary depth (using iterative deepening).
      */
-    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, uint64_t startTime, int64_t timeRemaining, int alpha, int beta, bool maximizingPlayer);
+    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int timeRemaining, int executionTime,
+                int alpha, int beta, bool maximizingPlayer);
     /**
      * Helper function to return a priority queue of board positions for a given board state.
      * @return A priority queue of integer pairs where the first integer in the pair is the weight of the move and

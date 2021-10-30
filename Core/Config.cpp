@@ -6,7 +6,7 @@
 
 Config::Config(bool interactive, int game_time) : m_time_remaining(game_time), m_interactive(interactive) {
     // There are 30 moves to make in a game. Allocate equal time for each.
-    this->m_move_time = game_time / 30;
+    this->m_move_time = game_time / 30.0;
 }
 
 int Config::getTimeRemaining() const {
@@ -17,7 +17,7 @@ void Config::setTimeRemaining(int mTimeRemaining) {
     m_time_remaining = mTimeRemaining;
 }
 
-int Config::getMoveTime() const {
+double Config::getMoveTime() const {
     return m_move_time;
 }
 

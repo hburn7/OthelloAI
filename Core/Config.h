@@ -11,15 +11,13 @@ public:
     Config(bool interactive, int game_time);
 
     bool isInteractive() const;
-    void setInteractive(bool interactive);
-
-    int getMoveTime() const;
+    double getMoveTime() const;
 
     int getTimeRemaining() const;
     void setTimeRemaining(int mTimeRemaining);
 private:
     bool m_interactive;
-    int m_move_time;
+    double m_move_time;
     int m_time_remaining;
 };
 
