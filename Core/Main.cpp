@@ -12,10 +12,11 @@
 #include "OthelloGame/OthelloGameBoard.h"
 
 #define MAX_DEPTH 10
+#define DEF_MAX_TIME 600
 
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
-    int gameTime = argc > 2 ? std::stoi(argv[2]) : 600;
+    int gameTime = argc > 2 ? std::stoi(argv[2]) : DEF_MAX_TIME;
 
     // Init config
     Config cfg = Config(interactive, gameTime);

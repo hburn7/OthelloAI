@@ -24,14 +24,14 @@ const std::array<uint64_t, 8> DIR_MASKS = {
 
 // Assigns weights to every position on the board.
 const std::array<int, 64> WEIGHT_MAP = {
-        20, -7, 11, 8, 8, 11, -7, 20,
+        50, -7, 11, 8, 8, 11, -7, 50,
         -7, -12, -4, 1, 1, -4, -12, -7,
         11, -4, 2, 2, 2, 2, -4, 11,
         8, 1, 2, 0, 0, 2, 1, 8,
         8, 1, 2, 0, 0, 2, 1, 8,
         11, -4, 2, 2, 2, 2, -4, 11,
         -7, -12, -4, 1, 1, -4, -12, -7,
-        20, -7, 11, 8, 8, 11, -7, 20
+        50, -7, 11, 8, 8, 11, -7, 50
 };
 
 OthelloGameBoard::OthelloGameBoard(Config cfg, BitBoard black, BitBoard white) : m_black(black), m_white(white), m_cfg(cfg) {}
@@ -219,27 +219,35 @@ void OthelloGameBoard::lineCap(OthelloColor color, int newPos) {
 }
 
 int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
-    int wParity = 0, wCorners = 0, wMobility = 0, wPosWeight = 0, wStability = 0;
+    int wParity = 0, wCorners = 0, wMobility = 0, wStability = 0;
 
     int countPlayer = this->countBits(playerDisks);
     int countOpponent = this->countBits(opponentDisks);
-    wParity = 100 * (countPlayer - countOpponent) / (countPlayer + countOpponent);
 
     int countTotal = countPlayer + countOpponent;
 
     uint64_t playerPossibleMoves = this->generateMoves(playerDisks, opponentDisks);
     uint64_t opponentPossibleMoves = this->generateMoves(opponentDisks, playerDisks);
 
-    // Individual position weight, stability value
+    // Individual position weight
+    int playerPosWeight = 0;
+    int oppPosWeight = 0;
 
-    int playerStableDisks = 0;
-    int oppStableDisks = 0;
+    for(int i = 0; i < 64; i++) {
+        uint64_t mask = 1LL << i;
+        int curWeight = WEIGHT_MAP[i];
+        if((playerPossibleMoves & mask) != 0) {
+            playerPosWeight += curWeight;
+        } else if((opponentPossibleMoves & mask) != 0) {
+            oppPosWeight += curWeight;
+        }
+    }
 
     // Stability
-    if(playerStableDisks + oppStableDisks == 0) {
-        wStability = 0;
+    if(playerPosWeight + oppPosWeight != 0) {
+        wStability = 100 * (playerPosWeight - oppPosWeight) / (playerPosWeight + oppPosWeight);
     } else {
-        wStability = 100 * (playerStableDisks - oppStableDisks) / (playerStableDisks + oppStableDisks);
+        wStability = 0;
     }
 
     // Coin parity
@@ -274,21 +282,30 @@ int OthelloGameBoard::evaluate(uint64_t playerDisks, uint64_t opponentDisks) {
         wMobility = 100 * (countMovesPlayer - countMovesOpponent) / (countMovesPlayer + countMovesOpponent);
     }
 
-    int score = 100 * wCorners + 5 * wMobility + 25 * wParity + 25 * wStability;
+    int factorCorners = 125;
+    int factorMobility = 5;
+    int factorParity = 8;
+    int factorStability = 25;
+
+    if(countTotal > 50) {
+        factorParity = 14;
+        factorStability = 40;
+    } else if(countTotal > 58) {
+        factorParity = 200;
+    }
+
+    int score = (factorCorners * wCorners) + (factorMobility * wMobility) + (factorParity * wParity) + (factorStability * wStability);
     return score;
 }
 
 int OthelloGameBoard::minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth,
                               uint64_t startTime, int64_t timeRemaining, int alpha, int beta, bool maximizingPlayer) {
-    uint64_t currentSysTime = getCurrentSysTime();
-
-    timeRemaining -= (currentSysTime - startTime);
-
-    // Todo: Time, iterative deepening
     if(timeRemaining < 0 || this->isGameComplete(playerDisks, opponentDisks)) {
         int evaluation = this->evaluate(playerDisks, opponentDisks);
         return evaluation;
     }
+
+    timeRemaining -= (this->getCurrentSysTime() - startTime);
 
     if(maximizingPlayer) {
         int maxEval = INT32_MIN;
@@ -363,23 +380,45 @@ int OthelloGameBoard::selectMove(OthelloColor playerColor, uint64_t playerDisks,
         return move;
     }
 
-    std::cout << "C All possible moves: ";
+    // Calculates the time to iteratively search 1 move out of the child list.
+    // This way, all children are given equal search time.
+    int64_t staticTime = (this->getCfg().getMoveTime() / pChildren.size()) * 1000;
+    Logger::logComment("Allowing " + std::to_string(staticTime) + "ms for next evaluations.");
 
-    uint64_t timeRemaining = (this->getCfg().getMoveTime() / pChildren.size()) * 1000;
+    int childrenSize = pChildren.size();
+    int counter = 1;
 
     while(!pChildren.empty()) {
+        int64_t timeRemaining = staticTime;
         uint64_t executionTime = this->getCurrentSysTime();
 
         auto nextBest = pChildren.top();
         pChildren.pop();
 
-        int evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 1, executionTime, timeRemaining, INT32_MIN, INT32_MAX, true);
+        int evaluation;
+        int curMaxDepth = 2;
+
+        for( ; timeRemaining > 0; curMaxDepth += 2) {
+            evaluation = minimax(nextBest.second, playerDisks, opponentDisks, 2, executionTime,
+                                     timeRemaining, INT32_MIN, INT32_MAX, true);
+
+            timeRemaining -= (this->getCurrentSysTime() - executionTime);
+        }
+
         evaluations.push(std::pair<int, int>(evaluation, nextBest.second));
+
+        std::string curMoveReadable = OutputHandler::getMoveOutput(playerColor, nextBest.second, false);
+
+        char *cstr = new char[curMoveReadable.length() + 1];
+        strcpy(cstr, curMoveReadable.c_str());
+        printf("C Evaluated move [%s] (%d / %d) to depth %d with score %d\n", cstr, counter, childrenSize, curMaxDepth, evaluation);
+        counter++;
     }
 
     // Iterate through child/evaluation score pairs and select best.
     auto retBest = evaluations.top();
 
+    std::cout << "C All possible moves: ";
     while(!evaluations.empty()) {
         auto best = evaluations.top();
         evaluations.pop();
