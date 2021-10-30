@@ -29,7 +29,7 @@ BitBoard.o: OthelloGame/BitBoard.cpp
 OthelloGameBoard.o: OthelloGame/OthelloGameBoard.cpp
 	g++ $(C_FLAGS) -c OthelloGame/OthelloGameBoard.cpp -lm
 
-OBJECTS = Main.o Logger.o Utils.o Agent.o InputHandler.o OutputHandler.o BitBoard.o OthelloGameBoard.o
+OBJECTS = Main.o Logger.o Utils.o Config.o Agent.o InputHandler.o OutputHandler.o BitBoard.o OthelloGameBoard.o
 
 all: $(PROGRAM)
 $(PROGRAM):$(OBJECTS)
