@@ -11,6 +11,9 @@ Logger.o: Logger.cpp
 Utils.o: Utils.cpp
 	g++ $(C_FLAGS) -c Utils.cpp
 
+Config.o: Config.cpp
+	g++ $(C_FLAGS) -c Config.cpp
+
 Agent.o: Agent/Agent.cpp
 	g++ $(C_FLAGS) -c Agent/Agent.cpp
 
@@ -24,7 +27,7 @@ BitBoard.o: OthelloGame/BitBoard.cpp
 	g++ $(C_FLAGS) -c OthelloGame/BitBoard.cpp
 
 OthelloGameBoard.o: OthelloGame/OthelloGameBoard.cpp
-	g++ $(C_FLAGS) -c OthelloGame/OthelloGameBoard.cpp
+	g++ $(C_FLAGS) -c OthelloGame/OthelloGameBoard.cpp -lm
 
 OBJECTS = Main.o Logger.o Utils.o Agent.o InputHandler.o OutputHandler.o BitBoard.o OthelloGameBoard.o
 
