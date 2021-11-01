@@ -11,7 +11,7 @@
 
 #include "../../Utils.h"
 #include "../Directive.h"
-#include "../../OthelloGame/OthelloColor.h"
+#include "../../OthelloGame/Color.h"
 
 class InputHandler {
 public:
@@ -27,7 +27,7 @@ public:
      * @param color The color of the player (or agent) we are looking at.
      * @return Matching Directive
      */
-    static Directive identifyDirective(std::string input, OthelloColor color);
+    static Directive identifyDirective(std::string input, int color);
 };
 
 #endif //OTHELLOPROJECT_CPP_INPUTHANDLER_H

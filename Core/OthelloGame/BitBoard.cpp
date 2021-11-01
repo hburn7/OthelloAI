@@ -3,26 +3,27 @@
 //
 
 #include "BitBoard.h"
+#include "Color.h"
 
 #define BLACK_BITS 0x0000000810000000
 #define WHITE_BITS 0x0000001008000000
 
-BitBoard::BitBoard(OthelloColor color) {
+BitBoard::BitBoard(int color) {
     this->color = color;
 
     switch(color) {
-        case Black: {
+        case BLACK: {
             this->bits = BLACK_BITS;
             break;
         }
-        case White: {
+        case WHITE: {
             this->bits = WHITE_BITS;
             break;
         }
     }
 }
 
-BitBoard::BitBoard(OthelloColor color, uint64_t bits) {
+BitBoard::BitBoard(int color, uint64_t bits) {
     this->color = color;
     this->bits = bits;
 }
@@ -32,12 +33,7 @@ BitBoard::BitBoard(const BitBoard &oldBoard) {
     this->bits = oldBoard.bits;
 }
 
-BitBoard::BitBoard(const BitBoard &oldBoard, uint64_t bits) {
-    this->color = oldBoard.color;
-    this->bits = bits;
-}
-
-OthelloColor BitBoard::getColor() {
+int BitBoard::getColor() {
     return this->color;
 }
 
@@ -45,11 +41,8 @@ uint64_t BitBoard::getBits() {
     return this->bits;
 }
 
-BitBoard BitBoard::setCellState(int pos) {
-    uint64_t combinedBits = 1LL << pos | this->getBits();
-    this->bits = combinedBits;
-
-    return BitBoard(this->getColor(), this->getBits());
+void BitBoard::applyIsolatedMove(Move move) {
+    this->setBits(this->getBits() | (1LL << move.getPos()));
 }
 
 bool BitBoard::getCellState(int pos) {
@@ -59,10 +52,10 @@ bool BitBoard::getCellState(int pos) {
 
 int BitBoard::getCellCount() {
     int count = 0;
-    uint64_t bits = this->getBits();
+    uint64_t curBits = this->getBits();
 
-    while(bits != 0) {
-        bits &= bits - 1;
+    while(curBits != 0) {
+        curBits &= curBits - 1;
         count++;
     }
 

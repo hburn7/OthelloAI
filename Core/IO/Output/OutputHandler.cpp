@@ -23,11 +23,12 @@ void OutputHandler::outputDirective(Directive d, const std::string &input) {
     }
 }
 
-std::string OutputHandler::getMoveOutput(OthelloColor c, int pos, bool logComment) {
+std::string OutputHandler::getMoveOutput(int c, Move move, bool logComment) {
+    int pos = move.getPos();
 
     // Pass
     if(pos < 0 || pos > 63) {
-        return c == Black ? "B" : "W";
+        return c == BLACK ? "B" : "W";
     }
 
     std::tuple<int, char> rowCol = Utils::posToRowCol(pos);
@@ -35,7 +36,7 @@ std::string OutputHandler::getMoveOutput(OthelloColor c, int pos, bool logCommen
     int row = std::get<0>(rowCol);
     char col = std::get<1>(rowCol);
 
-    char colorChar = c == Black ? 'B' : 'W';
+    char colorChar = c == BLACK ? 'B' : 'W';
 
     // Definitely overkill allocating 255, but we don't want to run into any unforseen errors due to the
     // string size being too small. So, this is just a safety measure. It's freed at the end anyway.
@@ -51,7 +52,7 @@ std::string OutputHandler::getMoveOutput(OthelloColor c, int pos, bool logCommen
     return ret;
 }
 
-int OutputHandler::toPos(std::string input) {
+Move OutputHandler::toMove(std::string input) {
     // Ex input: 'W a 1' -> returns 63 | 'B h 8' -> returns 0
     int x = 7 - Utils::getColFromChar(input[2]);
     int y = 8 - atoi(&input[4]);
@@ -61,10 +62,10 @@ int OutputHandler::toPos(std::string input) {
     if(pos < 0 || pos > 63) {
         // Can happen if we try to convert a standalone letter. e.g. W or B
         Logger::logComment("Received input '" + input + "'. Returning pos -1!");
-        return -1;
+        return Move();
     }
 
     Logger::logComment("Converted " + input + " to pos: " + std::to_string(pos));
 
-    return pos;
+    return Move(pos, INT32_MIN); // Value of the move is unknown at first.
 }

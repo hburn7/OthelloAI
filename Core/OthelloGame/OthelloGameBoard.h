@@ -10,12 +10,16 @@
 #include <math.h>
 #include <queue>
 #include <vector>
+#include <stack>
 
 #include "BitBoard.h"
+#include "Color.h"
+#include "Move.h"
 #include "../Config.h"
 #include "../Utils.h"
-#include "../Agent/Agent.h"
 #include "../IO/Output/OutputHandler.h"
+
+// TODO: Update comments - a lot of the docs here are outdated.
 
 /**
  * Represents the entire gameboard for both black and white. When working
@@ -28,34 +32,40 @@
 class OthelloGameBoard {
 public:
     /**
-     * Initializes the game m_board to default values, except for the provided BitBoards which are
-     * assumed to have pre-populated values.
+     * Initializes the gameboard to the specified values.
      * @param cfg The internal configuration for the game
-     * @param black Initial black starting m_board
-     * @param white Initial white starting m_board
+     * @param player Initial player starting m_board
+     * @param opponent Initial opponent starting m_board
      */
-    OthelloGameBoard(Config cfg, BitBoard black, BitBoard white);
+    OthelloGameBoard(Config cfg, int playerColor, BitBoard player, BitBoard opponent);
     /**
-     * Generates a uint64_t containing all possible moves for the given player.
+     * Creates a copy of gameboard.
+     * @param gameBoard The board to copy.
+     */
+    OthelloGameBoard(const OthelloGameBoard &gameBoard);
+    /**
+     * Generates a bitmask containing all possible moves for the given player.
      * @param playerDisks Player's pieces
      * @param oppDisks Opponent's pieces
      * @return A uint64_t containing all possible moves for the color.
      */
-    uint64_t generateMoves(long playerDisks, long oppDisks);
+    uint64_t generateMoveMask(uint64_t playerDisks, uint64_t oppDisks);
     /**
      * Selects a move for the given player.
      * @param playerColor The color of the player.
      * @param playerDisks The disks belonging to the player the move is generated for.
      * @param opponentDisks The disks belonging to the opponent player.
-     * @return An optimal move, using minimax and alpha-beta pruning.
+     * @param random Whether the move selected is random (no AI involved, for testing purposes only).
+     * @return An optimal move, using alphaBeta and alpha-beta pruning.
      */
-    int selectMove(OthelloColor playerColor, uint64_t playerDisks, uint64_t opponentDisks);
+    Move selectMove(int playerColor, OthelloGameBoard gameBoard, bool random, bool agentPlay);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
-     * @param color The color of the player we are applying this move for.
+     * @param board The board to apply the move to.
+     * @param m The move to apply
      * The position to set the move at, ranging 0-63 inclusive.
      */
-    void applyMove(OthelloColor color, int pos);
+    void applyMove(BitBoard board, Move m);
     /**
      * Prints out the current game board to the console.
      */
@@ -63,9 +73,17 @@ public:
     /**
     * Draws the board with a set of data.
     */
-    static void drawBoard(uint64_t black, uint64_t white);
-    BitBoard getBlack();
-    BitBoard getWhite();
+    static void drawBoard(OthelloGameBoard gameBoard);
+    BitBoard getPlayer();
+    BitBoard getOpponent();
+    BitBoard getForColor(int color);
+    /**
+     * Updates a bitboard inside the gameboard based on its color.
+     * @param board The board to update internally, based on color.
+     */
+    void setForColor(BitBoard board);
+    int getPlayerColor();
+    int getOpponentColor();
 
     const Config &getCfg() const;
     /**
@@ -78,71 +96,75 @@ public:
      * @param color The color to count
      * @return The number of pieces occupied
      */
-    int countPieces(OthelloColor color);
+    int countPieces(int color);
     /**
      * @return Total amount of set bits in the provided data.
      */
     int countBits(uint64_t bits);
 private:
     Config m_cfg;
-    BitBoard m_black;
-    BitBoard m_white;
-
-    int m_blackSecondsRemaining;
-    int m_whiteSecondsRemaining;
+    int m_playerColor;
+    BitBoard m_playerBoard;
+    BitBoard m_opponentBoard;
 
     /**
      * Returns a bitboard for a given color.
      * @param color The color of the board to retrieve.
      */
-    BitBoard getBoard(OthelloColor color);
+    BitBoard getBoard(int color);
     /**
      * Captures opponent pieces in a line, flipping all necessary opponent pieces along the way.
      * @param color The color of the player making the action
-     * @param newPos The most recent position selected on the board to move to.
-     * @param previousState The previous state of the board, before newPos is applied.
-     * @param curState The new state of the board, after newPos is applied.
+     * @param newMove The most recent position selected on the board to move to.
      */
-    void lineCap(OthelloColor color, int newPos);
+    void lineCap(BitBoard board, Move newMove);
     /**
-     * Performs a minimax search algorithm, producing a game tree, using alpha-beta pruning.
-     * @param pos The position to evaluate
-     * @param playerDisks Player disks as they exist at the current depth (starting depth is 0)
-     * @param opponentDisks Opponent disks as they exist at the current depth (starting depth is 0)
-     * @param depth The current depth of the search - initial call is always 1
-     * @param startTime The current system time in milliseconds
-     * @param timeRemaining Time remaining for the iterative deepening, in milliseconds. Default is specified in Config
-     * @param alpha Alpha value for alpha-beta algorithm - default is negative infinity
-     * @param beta Beta value for alpha-beta algorithm - default is positive infinity
-     * @param maximizingPlayer Whether the current player is maximizing - initial call is always true regardless of player.
-     * @return Evaluation of gameboard at pos down to an arbitrary depth (using iterative deepening).
+     * Performs a minimax search with alpha-beta pruning.
+     * @param gameBoard The current state of the game.
+     * @param player The maximizing player. 1 is the AI (max), -1 is the opponent (min).
+     * @param depth The current search depth.
+     * @param maxDepth The maximum depth to search to.
+     * @param stopTime The real system time at which to abort evaluation.
+     * @param alpha The lowest value that max player will accept.
+     * @param beta The highest value that min player will accept.
+     * @return Pair with the score and depth of the evaluation.
      */
-    int minimax(int pos, uint64_t playerDisks, uint64_t opponentDisks, int depth, int maxDepth, int timeRemaining, int executionTime,
-                int alpha, int beta, bool maximizingPlayer);
+    std::pair<int, int> alphaBeta(OthelloGameBoard gameBoard, int player, int depth, int maxDepth,
+                  uint64_t stopTime, int alpha, int beta, bool max);
     /**
      * Helper function to return a priority queue of board positions for a given board state.
-     * @return A priority queue of integer pairs where the first integer in the pair is the weight of the move and
-     * the second int is the position on the board to move to.
+     * @return A priority queue of moves available based on the state.
+     * The priority queue's first value is the rank of the move, the second value
+     * is the integer value of the move (ranged 0-63 inclusive).
      */
-    std::priority_queue<std::pair<int, int>> getMovesAsPriorityQueue(uint64_t state);
+    std::priority_queue<Move, std::vector<Move>, std::less<std::vector<Move>::value_type>> getMovesAsPriorityQueue(uint64_t state);
+    /**
+     * Generates moves and returns them as a priority queue.
+     * @param player The player to generate moves for.
+     * @param opponent Current state of opponent board.
+     * @return Priority queue of moves for player, ranked from most to least beneficial.
+     * The priority queue's first value is the rank of the move, the second value
+     * is the integer value of the move (ranged 0-63 inclusive).
+     */
+    std::priority_queue<Move, std::vector<Move>, std::less<std::vector<Move>::value_type>> generateMovesAsPriorityQueue(BitBoard player, BitBoard opponent);
     /**
       * Scores the given board state and returns the value.
-      * A positive score means the board at the given configuration favors the agent.
+      * A positive score means the board at the given configuration favors the player.
       * A negative score means the board favors the opponent.
       * @param playerDisks The player's disks.
       * @param opponentDisks The opponent's disks.
-      * @return A score reflective of how much the board is in favor of our agent.
+      * @return A score reflective of how much the board is in favor of our player.
       */
-    int evaluate(uint64_t playerDisks, uint64_t opponentDisks);
+    int evaluate(OthelloGameBoard gameBoard);
     /**
     * Determines whether the game would be finished if the given disk states
     * are to be applied to the board.
     */
-    bool isGameComplete(uint64_t playerDisks, uint64_t opponentDisks);
+    bool isGameComplete(OthelloGameBoard gameBoard);
     /**
      * @return Current system time in milliseconds
      */
-    long getCurrentSysTime();
+    uint64_t getCurrentSysTime();
 };
 
 
