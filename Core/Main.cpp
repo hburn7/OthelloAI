@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
         // Agent makes a move.
         if(agentTurn) {
-            Move move = gameBoard.selectMove(agentColor, gameBoard, false, true);
+            Move move = gameBoard.selectMove(agentColor, false);
 
             // Apply move to board if not passing
             if(!move.isPass()) {
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 
             } else {
                 // "Player" (agent) makes a move if not m_interactive
-                move = gameBoard.selectMove(opponentColor, gameBoard, true, false);
+                move = gameBoard.selectMove(opponentColor, true);
             }
 
             // Apply move to board if not passing.

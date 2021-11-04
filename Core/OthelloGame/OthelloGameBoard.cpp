@@ -368,16 +368,17 @@ std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int 
     BitBoard maximizerBoard = gameBoard.getForColor(player);
     BitBoard minimizerBoard = gameBoard.getForColor(-player);
 
-    if(max) {
-        auto moves = this->generateMovesAsPriorityQueue(maximizerBoard, minimizerBoard);
+    auto moves = this->generateMovesAsPriorityQueue(maximizerBoard, minimizerBoard);
 
+    if(max) {
         if(moves.empty()) {
             return std::pair<int, int>(-9999999, depth);
         }
 
         int maxEval = INT32_MIN;
         while(!moves.empty()) {
-            gameBoard.applyMove(maximizerBoard, moves.top());
+            OthelloGameBoard newBoard = OthelloGameBoard(gameBoard);
+            newBoard.applyMove(maximizerBoard, moves.top());
             moves.pop();
 
             auto eval = alphaBeta(gameBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, false);
@@ -389,7 +390,6 @@ std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int 
         }
         return std::pair<int, int>(maxEval, depth);
     } else {
-        auto moves = this->generateMovesAsPriorityQueue(minimizerBoard, maximizerBoard);
 
         if(moves.empty()) {
             return std::pair<int, int>(-9999999, depth);
@@ -397,7 +397,8 @@ std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int 
 
         int minEval = INT32_MAX;
         while(!moves.empty()) {
-            gameBoard.applyMove(minimizerBoard, moves.top());
+            OthelloGameBoard newBoard = OthelloGameBoard(gameBoard);
+            newBoard.applyMove(maximizerBoard, moves.top());
             moves.pop();
 
             auto eval = alphaBeta(gameBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, true);
@@ -412,9 +413,9 @@ std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int 
 }
 
 // TODO: Convert random param to sep function 'getRandomMove()'
-Move OthelloGameBoard::selectMove(int playerColor, OthelloGameBoard gameBoard, bool random, bool agentPlay) {
-    BitBoard primary = gameBoard.getForColor(playerColor);
-    BitBoard opponent = gameBoard.getForColor(-playerColor);
+Move OthelloGameBoard::selectMove(int playerColor, bool random) {
+    BitBoard primary = this->getForColor(playerColor);
+    BitBoard opponent = this->getForColor(-playerColor);
 
     // Calculates the time to iteratively search 1 move out of the child list.
     // This way, all children are given equal search time.
@@ -430,15 +431,16 @@ Move OthelloGameBoard::selectMove(int playerColor, OthelloGameBoard gameBoard, b
 
     Logger::logComment("Allowing " + std::to_string(staticTime) + "ms for next evaluations.");
 
-    Move bestMove = Move(INT32_MIN, INT32_MIN);
+    Move bestMove = possibleMoves.top();
     int size = possibleMoves.size();
     int counter = 1;
     while(!possibleMoves.empty()) {
         Move next = possibleMoves.top();
         possibleMoves.pop();
 
-        OthelloGameBoard newBoard = OthelloGameBoard(gameBoard);
-        newBoard.applyMove(primary, next);
+        BitBoard newPrimary = BitBoard(primary);
+        OthelloGameBoard newBoard = OthelloGameBoard(*this);
+        newBoard.applyMove(newPrimary, next);
 
         int maxDepth = 2;
         uint64_t endTime = this->getCurrentSysTime() + staticTime;

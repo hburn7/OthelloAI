@@ -52,13 +52,11 @@ public:
     uint64_t generateMoveMask(uint64_t playerDisks, uint64_t oppDisks);
     /**
      * Selects a move for the given player.
-     * @param playerColor The color of the player.
-     * @param playerDisks The disks belonging to the player the move is generated for.
-     * @param opponentDisks The disks belonging to the opponent player.
-     * @param random Whether the move selected is random (no AI involved, for testing purposes only).
+     * @param playerColor The color of the player the move is being selected for.
+     * @param random Whether or not the move returned is a pseudo-random move.
      * @return An optimal move, using alphaBeta and alpha-beta pruning.
      */
-    Move selectMove(int playerColor, OthelloGameBoard gameBoard, bool random, bool agentPlay);
+    Move selectMove(int playerColor, bool random);
     /**
      * Applies a move to the game board for the given color. Row and column are indexed from zero.
      * @param board The board to apply the move to.
