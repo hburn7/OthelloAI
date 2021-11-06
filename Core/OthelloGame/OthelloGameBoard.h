@@ -154,7 +154,7 @@ private:
      * Helper to evaluate. Computes a weighted sum for two values.
      * @return zero if the sum is zero. Otherwise, 100.0 * (p_amt - o_amt) / (p_amt + o_amt)
      */
-    int getSumWeight(int p_amt, int o_amt);
+    double getSumWeight(int p_amt, int o_amt);
     /**
       * Scores the given board state and returns the value.
       * A positive score means the board at the given configuration favors the player.

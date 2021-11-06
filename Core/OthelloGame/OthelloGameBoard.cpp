@@ -237,7 +237,7 @@ bool OthelloGameBoard::ignoreAdjacents(int i) {
     return true;
 }
 
-int OthelloGameBoard::getSumWeight(int p_amt, int o_amt) {
+double OthelloGameBoard::getSumWeight(int p_amt, int o_amt) {
     if(p_amt + o_amt == 0) {
         return 0;
     }
@@ -250,7 +250,7 @@ int OthelloGameBoard::getSumWeight(int p_amt, int o_amt) {
         return -std::abs(w);
     }
 
-    return (int) w;
+    return w;
 }
 
 int OthelloGameBoard::evaluate() {
@@ -298,35 +298,50 @@ int OthelloGameBoard::evaluate() {
             oCornerPos.push_back(i);
         }
 
-        bool ignoreSelf = false;
-        bool ignoreOpp = false;
-
         // Adjacent corners
         if ((playerAdjCornerMask & mask) != 0) {
-            if(!pCornerPos.empty()) {
-                ignoreSelf = ignoreAdjacents(i);
-            }
-
-            if(!ignoreSelf) {
-                pAdjCorners++;
-            }
+            pAdjCorners++;
         } else if ((oppAdjCornerMask & mask) != 0) {
-            if(oCornerPos.size() != 0) {
-                ignoreOpp = ignoreAdjacents(i);
-            }
-
-            if(!ignoreOpp) {
-                oAdjCorners++;
-            }
+            oAdjCorners++;
         }
 
         // Apply pos weights
-        if (!ignoreSelf && ((pMovesPossible & mask) != 0)) {
+        if ((pMovesPossible & mask) != 0) {
             pPosWeight += weight;
-        } else if (!ignoreSelf && ((oMovesPossible & mask) != 0)) {
+        } else if ((oMovesPossible & mask) != 0) {
             oPosWeight += weight;
         }
     }
+
+    for(int i = 0; i < pCornerPos.size(); i++) {
+        auto matchingAdjacents = STABILITY_IGNORES.find(pCornerPos.at(i));
+
+        if(matchingAdjacents != STABILITY_IGNORES.end()) {
+            std::array<int, 3> adjacent = matchingAdjacents->second;
+            for(int j = 0; j < adjacent.size(); j++) {
+                int known = adjacent.at(j);
+                if(known == i) {
+                    pPosWeight -= WEIGHT_MAP[i];
+                    pAdjCorners -= 1;
+                }
+            }
+        }
+    }
+
+//    for(int i = 0; i < oCornerPos.size(); i++) {
+//        auto matchingAdjacents = STABILITY_IGNORES.find(oCornerPos.at(i));
+//
+//        if(matchingAdjacents != STABILITY_IGNORES.end()) {
+//            std::array<int, 3> adjacent = matchingAdjacents->second;
+//            for(int j = 0; j < adjacent.size(); j++) {
+//                int known = adjacent.at(j);
+//                if(known == i) {
+//                    oPosWeight -= WEIGHT_MAP[i];
+//                    oAdjCorners -= 1;
+//                }
+//            }
+//        }
+//    }
 
     wStability = getSumWeight(pPosWeight, oPosWeight);
     wParity = getSumWeight(pCount, oCount);
@@ -334,11 +349,11 @@ int OthelloGameBoard::evaluate() {
     wAdjCorners = -getSumWeight(pAdjCorners, oAdjCorners);
     wMobility = getSumWeight(countBits(pMovesPossible), countBits(oMovesPossible));
 
-    int fCorners = 160;
+    int fCorners = 200;
     int fAdjacent = 20;
-    int fMobility = 20;
-    int fParity = 14;
-    int fStability = 35;
+    int fMobility = 28;
+    int fParity = 8;
+    int fStability = 45;
 
     if(oMovesPossible == 0) {
         fMobility = 500;
@@ -355,7 +370,7 @@ int OthelloGameBoard::evaluate() {
         fStability = 5;
     }
 
-    int score = (int) (fCorners * wCorners) + (fAdjacent * wAdjCorners) + (fMobility * wMobility) +
+    int score = (int) (fCorners * wCorners) + /*(fAdjacent * wAdjCorners) +*/ (fMobility * wMobility) +
                 (fParity * wParity) + (fStability * wStability);
 
     // End game. Return below for confirmed win / loss.
@@ -460,7 +475,7 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
         auto newBoard = OthelloGameBoard(*this);
         newBoard.applyMove(newPrimary, cur);
 
-        int maxDepth = 8;
+        int maxDepth = 10;
         auto eval = this->alphaBeta(newBoard, -playerColor, 1, maxDepth, 0, INT32_MIN, INT32_MAX, true);
         cur.setValue(eval.first);
 
