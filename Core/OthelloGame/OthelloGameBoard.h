@@ -8,6 +8,7 @@
 #include <bitset>
 #include <chrono>
 #include <math.h>
+#include <map>
 #include <queue>
 #include <vector>
 #include <stack>
@@ -146,6 +147,15 @@ private:
      */
     std::priority_queue<Move, std::vector<Move>, std::less<std::vector<Move>::value_type>> generateMovesAsPriorityQueue(BitBoard player, BitBoard opponent);
     /**
+     * Helper to evaluate.
+     */
+    bool ignoreAdjacents(int i);
+    /**
+     * Helper to evaluate. Computes a weighted sum for two values.
+     * @return zero if the sum is zero. Otherwise, 100.0 * (p_amt - o_amt) / (p_amt + o_amt)
+     */
+    int getSumWeight(int p_amt, int o_amt);
+    /**
       * Scores the given board state and returns the value.
       * A positive score means the board at the given configuration favors the player.
       * A negative score means the board favors the opponent.
@@ -153,7 +163,7 @@ private:
       * @param opponentDisks The opponent's disks.
       * @return A score reflective of how much the board is in favor of our player.
       */
-    int evaluate(OthelloGameBoard gameBoard);
+    int evaluate();
     /**
     * Determines whether the game would be finished if the given disk states
     * are to be applied to the board.

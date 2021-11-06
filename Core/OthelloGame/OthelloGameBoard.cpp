@@ -8,7 +8,7 @@
 #define UNIVERSE 0xffffffffffffffffULL
 
 #define CORNER_MASK 0x8100000000000081
-#define CORNER_ADJACENT_MASK 0x42C3000000C342
+#define CORNER_ADJACENT_MASK 0x42C300000000C342
 
 const std::array<int, 8> DIR_INCREMENTS = {8, 9, 1, -7, -8, -9, -1, 7};
 const std::array<uint64_t, 8> DIR_MASKS = {
@@ -22,7 +22,7 @@ const std::array<uint64_t, 8> DIR_MASKS = {
         0x7F7F7F7F7F7F7F00L  //NorthEast
 };
 
-// Assigns weights to every position on the board.
+// Assigns weight to every position on the board.
 const std::array<int, 64> WEIGHT_MAP = {
         50, -20, 11, 8, 8, 11, -20, 50,
         -20, -35, -4, 1, 1, -4, -35, -20,
@@ -32,6 +32,13 @@ const std::array<int, 64> WEIGHT_MAP = {
         11, -4, 2, 2, 2, 2, -4, 11,
         -20, -35, -4, 1, 1, -4, -35, -20,
         50, -20, 11, 8, 8, 11, -20, 50
+};
+
+const std::map<int, std::array<int, 3>> STABILITY_IGNORES = {
+        { 0, std::array<int, 3> { 1, 8, 9 } },
+        { 7, std::array<int, 3> { 6, 14, 15 }, },
+        { 56, std::array<int, 3> { 57, 48, 49 }, },
+        { 62, std::array<int, 3> { 62, 55, 54 }, }
 };
 
 OthelloGameBoard::OthelloGameBoard(Config cfg, int playerColor, BitBoard player, BitBoard opponent) :
@@ -58,7 +65,6 @@ void OthelloGameBoard::drawBoard(OthelloGameBoard gameBoard) {
             std::cout << "C " << (-(i / 8) + 8) << " * ";
         }
 
-        uint64_t mask = 1LL << i;
         if (blackBoard.getCellState(i)) {
             Logger::logComment("B ", false);
         } else if (whiteBoard.getCellState(i)) {
@@ -221,138 +227,143 @@ void OthelloGameBoard::lineCap(BitBoard board, Move move) {
     this->setForColor(opp);
 }
 
-int OthelloGameBoard::evaluate(OthelloGameBoard gameBoard) {
-    uint64_t playerDisks = gameBoard.getPlayer().getBits();
-    uint64_t opponentDisks = gameBoard.getOpponent().getBits();
+// Helper to evaluate
+bool OthelloGameBoard::ignoreAdjacents(int i) {
+    auto matchingAdjacents = STABILITY_IGNORES.find(i);
+    if(matchingAdjacents == STABILITY_IGNORES.end()) {
+        return false;
+    }
 
-    double wParity = 0, wCorners = 0, wAdjCorners = 0, wMobility = 0, wStability = 0;
+    return true;
+}
 
-    int countPlayer = gameBoard.getPlayer().getCellCount();
-    int countOpponent = gameBoard.getOpponent().getCellCount();
+int OthelloGameBoard::getSumWeight(int p_amt, int o_amt) {
+    if(p_amt + o_amt == 0) {
+        return 0;
+    }
 
-    uint64_t playerPossibleMoves = this->generateMoveMask(playerDisks, opponentDisks);
-    uint64_t opponentPossibleMoves = this->generateMoveMask(opponentDisks, playerDisks);
+    int sum = p_amt + o_amt;
+    int diff = p_amt - o_amt;
+
+    double w = 100.0 * diff / sum;
+    if(sum < 0) {
+        return -std::abs(w);
+    }
+
+    return (int) w;
+}
+
+int OthelloGameBoard::evaluate() {
+    BitBoard pBoard = this->getPlayer();
+    BitBoard oBoard = this->getOpponent();
+
+    double wParity, wCorners, wAdjCorners, wMobility, wStability;
+
+    int pCount = pBoard.getCellCount();
+    int oCount = oBoard.getCellCount();
+
+    uint64_t pMovesPossible = this->generateMoveMask(pBoard.getBits(), oBoard.getBits());
+    uint64_t oMovesPossible = this->generateMoveMask(oBoard.getBits(), pBoard.getBits());
 
     // Individual position weight
-    int playerPosWeight = 0;
-    int oppPosWeight = 0;
+    int pPosWeight = 0;
+    int oPosWeight = 0;
 
-    int playerCornerCount = 0;
-    int oppCornerCount = 0;
+    int pCorners = 0;
+    int oCorners = 0;
 
     // Apply high negative weight to disks residing in corner-flankable spaces.
-    int playerAdjCornerCount = 0;
-    int oppAdjCornerCount = 0;
+    int pAdjCorners = 0;
+    int oAdjCorners = 0;
 
-    uint64_t playerCornerMask = playerDisks & CORNER_MASK;
-    uint64_t oppCornerMask = opponentDisks & CORNER_MASK;
+    uint64_t playerCornerMask = pBoard.getBits() & CORNER_MASK;
+    uint64_t oppCornerMask = oBoard.getBits() & CORNER_MASK;
 
-    uint64_t playerAdjCornerMask = playerDisks & CORNER_ADJACENT_MASK;
-    uint64_t oppAdjCornerMask = opponentDisks & CORNER_ADJACENT_MASK;
+    uint64_t playerAdjCornerMask = pBoard.getBits() & CORNER_ADJACENT_MASK;
+    uint64_t oppAdjCornerMask = oBoard.getBits() & CORNER_ADJACENT_MASK;
+
+    auto pCornerPos = std::vector<int>{};
+    auto oCornerPos = std::vector<int>{};
 
     for (int i = 0; i < 64; i++) {
         uint64_t mask = 1LL << i;
-        int curWeight = WEIGHT_MAP[i];
+        int weight = WEIGHT_MAP[i];
+
+        // Corners
+        if ((playerCornerMask & mask) != 0) {
+            pCorners++;
+            pCornerPos.push_back(i);
+        } else if ((oppCornerMask & mask) != 0) {
+            oCorners++;
+            oCornerPos.push_back(i);
+        }
+
+        bool ignoreSelf = false;
+        bool ignoreOpp = false;
+
+        // Adjacent corners
+        if ((playerAdjCornerMask & mask) != 0) {
+            if(!pCornerPos.empty()) {
+                ignoreSelf = ignoreAdjacents(i);
+            }
+
+            if(!ignoreSelf) {
+                pAdjCorners++;
+            }
+        } else if ((oppAdjCornerMask & mask) != 0) {
+            if(oCornerPos.size() != 0) {
+                ignoreOpp = ignoreAdjacents(i);
+            }
+
+            if(!ignoreOpp) {
+                oAdjCorners++;
+            }
+        }
 
         // Apply pos weights
-        if ((playerPossibleMoves & mask) != 0) {
-            playerPosWeight += curWeight;
-        } else if ((opponentPossibleMoves & mask) != 0) {
-            oppPosWeight += curWeight;
-        }
-
-        // Count corners
-        if ((playerCornerMask & mask) != 0) {
-            playerCornerCount++;
-        } else if ((oppCornerMask & mask) != 0) {
-            oppCornerCount++;
-        }
-
-        // Count areas adjacent to corners
-        if ((playerAdjCornerMask & mask) != 0) {
-            playerAdjCornerCount++;
-        } else if ((oppAdjCornerMask & mask) != 0) {
-            oppAdjCornerCount++;
+        if (!ignoreSelf && ((pMovesPossible & mask) != 0)) {
+            pPosWeight += weight;
+        } else if (!ignoreSelf && ((oMovesPossible & mask) != 0)) {
+            oPosWeight += weight;
         }
     }
 
-    // Stability
-    int weightDiff = playerPosWeight - oppPosWeight;
-    wStability = 100.0 * weightDiff / (playerPosWeight + oppPosWeight);
-    if (weightDiff < 0) {
-        wStability = -std::abs(wStability);
+    wStability = getSumWeight(pPosWeight, oPosWeight);
+    wParity = getSumWeight(pCount, oCount);
+    wCorners = getSumWeight(pCorners, oCorners);
+    wAdjCorners = -getSumWeight(pAdjCorners, oAdjCorners);
+    wMobility = getSumWeight(countBits(pMovesPossible), countBits(oMovesPossible));
+
+    int fCorners = 160;
+    int fAdjacent = 20;
+    int fMobility = 20;
+    int fParity = 14;
+    int fStability = 35;
+
+    if(oMovesPossible == 0) {
+        fMobility = 500;
     }
 
-    // Coin parity
-    int countDiff = countPlayer - countOpponent;
-    wParity = 100.0 * countDiff / (countPlayer + countOpponent);
-    if (countDiff < 0) {
-        wParity = -std::abs(wParity);
+    int sumMoves = pCount + oCount;
+    if(sumMoves >= 50) {
+        fParity = 35;
+        fMobility = 30;
+    }
+    if(sumMoves >= 58) {
+        fParity = 200;
+        fMobility = 10;
+        fStability = 5;
     }
 
-    // Corners
-    int cornerDiff = playerCornerCount - oppCornerCount;
-    int sumCorners = playerCornerCount + oppCornerCount;
+    int score = (int) (fCorners * wCorners) + (fAdjacent * wAdjCorners) + (fMobility * wMobility) +
+                (fParity * wParity) + (fStability * wStability);
 
-    if (sumCorners == 0) {
-        // Prevents div / 0 errors.
-        wCorners = 0;
-    } else {
-        wCorners = 100.0 * cornerDiff / sumCorners;
-        if (cornerDiff < 0) {
-            wCorners = -std::abs(wCorners);
-        }
-    }
-
-    // Adjacent Corners
-    int adjCornerDiff = playerAdjCornerCount - oppAdjCornerCount;
-    int sumAdj = playerAdjCornerCount + oppAdjCornerCount;
-
-    if (sumAdj == 0) {
-        wAdjCorners = 0;
-    } else {
-        wAdjCorners = 100.0 * adjCornerDiff / sumAdj;
-        if (cornerDiff < 0) {
-            wAdjCorners = -std::abs(wAdjCorners);
-        }
-    }
-
-    // Mobility
-    int countMovesPlayer = this->countBits(playerPossibleMoves);
-    int countMovesOpponent = this->countBits(opponentPossibleMoves);
-
-    int moveDiff = countMovesPlayer - countMovesOpponent;
-    int sumAllMoves = countMovesPlayer + countMovesOpponent;
-    wMobility = 100.0 * moveDiff / sumAllMoves;
-    if (moveDiff < 0) {
-        wMobility = -std::abs(wMobility);
-    }
-
-    bool forcePass = false;
-    if (countMovesOpponent == 0) {
-        // Amplify by a high value to showcase forcing pass onto opponent or being forced to pass.
-        // Amplification will result in a stronger positive or stronger negative number per the formula above.
-        forcePass = true;
-    }
-
-    int factorCorners = 90;
-    int factorAdjCorners = 10;
-    int factorMobility = 15;
-    int factorParity = 5;
-    int factorStability = 45;
-
-    int score = (int) (factorCorners * wCorners) + (factorAdjCorners * wAdjCorners) + (factorMobility * wMobility) +
-                (factorParity * wParity) + (factorStability * wStability);
-    if (forcePass) {
-        score += 1000 * sumAllMoves; // Higher value given to end-game force passes.
-    }
-
-    if (sumAllMoves == 64) {
-        // Game over
-        if (wParity < 0) {
-            score = -1; // We lost
+    // End game. Return below for confirmed win / loss.
+    if(sumMoves == 64) {
+        if(pCount < oCount) {
+            return INT32_MIN;
         } else {
-            score = 1; // We won
+            return INT32_MAX;
         }
     }
 
@@ -361,54 +372,57 @@ int OthelloGameBoard::evaluate(OthelloGameBoard gameBoard) {
 
 std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int player, int depth, int maxDepth,
                                  uint64_t stopTime, int alpha, int beta, bool max) {
-    if(depth >= maxDepth) {
-        return std::pair<int, int>(this->evaluate(gameBoard), depth);
+    if(depth >= maxDepth || gameBoard.isGameComplete()) {
+        return { gameBoard.evaluate(), depth };
     }
 
-    BitBoard maximizerBoard = gameBoard.getForColor(player);
-    BitBoard minimizerBoard = gameBoard.getForColor(-player);
+    BitBoard pBoard = gameBoard.getForColor(player);
+    BitBoard oBoard = gameBoard.getForColor(-player);
 
-    auto moves = this->generateMovesAsPriorityQueue(maximizerBoard, minimizerBoard);
+    auto moves = this->generateMovesAsPriorityQueue(pBoard, oBoard);
 
     if(max) {
         if(moves.empty()) {
-            return std::pair<int, int>(-9999999, depth);
+            return { gameBoard.evaluate(), depth };
         }
 
         int maxEval = INT32_MIN;
         while(!moves.empty()) {
-            OthelloGameBoard newBoard = OthelloGameBoard(gameBoard);
-            newBoard.applyMove(maximizerBoard, moves.top());
+            auto newMaximizerBoard = BitBoard(pBoard);
+            auto newBoard = OthelloGameBoard(gameBoard);
+            newBoard.applyMove(newMaximizerBoard, moves.top());
             moves.pop();
 
-            auto eval = alphaBeta(gameBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, false);
+            auto eval = alphaBeta(newBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, false);
             maxEval = std::max(maxEval, eval.first);
             alpha = std::max(alpha, eval.first);
             if(beta <= alpha) {
                 break;
             }
         }
-        return std::pair<int, int>(maxEval, depth);
+        return { maxEval, depth };
     } else {
 
         if(moves.empty()) {
-            return std::pair<int, int>(-9999999, depth);
+            return { gameBoard.evaluate(), depth };
         }
 
         int minEval = INT32_MAX;
         while(!moves.empty()) {
-            OthelloGameBoard newBoard = OthelloGameBoard(gameBoard);
-            newBoard.applyMove(maximizerBoard, moves.top());
+            auto newPBoard = BitBoard(pBoard);
+            auto newBoard = OthelloGameBoard(gameBoard);
+
+            newBoard.applyMove(newPBoard, moves.top());
             moves.pop();
 
-            auto eval = alphaBeta(gameBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, true);
+            auto eval = alphaBeta(newBoard, -player, depth + 1, maxDepth, stopTime, alpha, beta, true);
             minEval = std::min(minEval, eval.first);
             beta = std::min(beta, eval.first);
             if(beta <= alpha) {
                 break;
             }
         }
-        return std::pair<int, int>(minEval, depth);
+        return { minEval, depth };
     }
 }
 
@@ -422,6 +436,10 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
 
     auto possibleMoves = this->generateMovesAsPriorityQueue(primary, opponent);
 
+    if(possibleMoves.empty()) {
+        return Move();
+    }
+
     if(random) {
         return possibleMoves.top();
     }
@@ -432,143 +450,34 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
     Logger::logComment("Allowing " + std::to_string(staticTime) + "ms for next evaluations.");
 
     Move bestMove = possibleMoves.top();
-    int size = possibleMoves.size();
+    ulong size = possibleMoves.size();
     int counter = 1;
     while(!possibleMoves.empty()) {
-        Move next = possibleMoves.top();
+        Move cur = possibleMoves.top();
         possibleMoves.pop();
 
-        BitBoard newPrimary = BitBoard(primary);
-        OthelloGameBoard newBoard = OthelloGameBoard(*this);
-        newBoard.applyMove(newPrimary, next);
+        auto newPrimary = BitBoard(primary);
+        auto newBoard = OthelloGameBoard(*this);
+        newBoard.applyMove(newPrimary, cur);
 
-        int maxDepth = 2;
-        uint64_t endTime = this->getCurrentSysTime() + staticTime;
+        int maxDepth = 8;
+        auto eval = this->alphaBeta(newBoard, -playerColor, 1, maxDepth, 0, INT32_MIN, INT32_MAX, true);
+        cur.setValue(eval.first);
 
-        Move placeholder = Move();
+        std::string curMoveReadable = OutputHandler::getMoveOutput(primary.getColor(), cur, false);
+        char *cstr = new char[curMoveReadable.length() + 1];
+        strcpy(cstr, curMoveReadable.c_str());
 
-        for(; endTime - this->getCurrentSysTime() > 0; maxDepth += 2) {
-            auto evaluation = alphaBeta(newBoard, playerColor, 1, maxDepth, endTime, INT32_MIN, INT32_MAX, true);
+        printf("C Evaluated move [%s] (%d / %lu) to depth %d with score %d\n", cstr, counter, size, maxDepth, cur.getValue());
 
-            Move cur = Move(next.getPos(), evaluation.first);
-
-            if(placeholder.getPos() != cur.getPos()) {
-                placeholder = cur;
-                std::string curMoveReadable = OutputHandler::getMoveOutput(primary.getColor(), cur, false);
-                char *cstr = new char[curMoveReadable.length() + 1];
-                strcpy(cstr, curMoveReadable.c_str());
-
-                printf("C Evaluated move [%s] (%d / %d) to depth %d with score %d\n", cstr, counter, size, evaluation.second, cur.getValue());
-
-                counter++;
-            }
-
-            if(cur.getValue() > bestMove.getValue()) {
-                bestMove = cur;
-            }
+        if(cur.getValue() > bestMove.getValue()) {
+            bestMove = cur;
         }
+
+        counter++;
     }
+
     return bestMove;
-
-//    int sumDisks = this->countBits(primary.getBits() | opponent.getBits());
-//
-//    auto pChildren = this->generateMovesAsPriorityQueue(primary, opponent);
-//
-//    if (pChildren.size() == 0) {
-//        Logger::logComment("Passing, no moves to make for primary.");
-//        return -1; // Pass, cannot make any moves
-//    }
-//
-//    // If the agent is a random agent (testing purposes only)
-//    if (random && pChildren.size() > 0) {
-//        return pChildren.top().second;
-//    }
-//
-//    // If there's only one possible move to make, make that move. Otherwise, evaluate all possible moves.
-//    if (pChildren.size() == 1) {
-//        int move = pChildren.top().second;
-//        pChildren.pop();
-//
-//        Logger::logComment("Only one move to make, " + OutputHandler::getMoveOutput(playerColor, move, false) +
-//                           ", selecting that!");
-//        return move;
-//    }
-//
-//
-
-//
-//    std::priority_queue<std::pair<int, int>> evaluations = {};
-//    int childrenSize = pChildren.size();
-//
-//    int counter = 1;
-//    OthelloGameBoard copy = OthelloGameBoard(gameBoard);
-//
-//    while (!pChildren.empty()) {
-//        int timeRemaining = staticTime;
-//        uint64_t executionTime;
-//        uint64_t stopTime;
-//
-//        auto nextBest = pChildren.top();
-//        pChildren.pop();
-//
-//        copy.applyMove(primary, nextBest.second);
-//
-//        int curEval;
-//        int prevEval = INT32_MIN;
-//        int curMaxDepth = 2;
-//
-//        // CurEval is discarded as the alphaBeta evaluation at the max depth was interrupted due to time and not completed properly.
-//        for (; timeRemaining > 0 && curMaxDepth <= 64 - sumDisks; curMaxDepth += 2) {
-//            // stopTime tells alphaBeta at what point on the system clock to abort evaluating.
-//            // This will result in an incomplete search. By default, the last search returned
-//            // by alphaBeta is always ignored. This is because we assume all searches are interrupted by time.
-//            // End-game searches are never ignored because they complete faster than the time limit.
-//
-//            executionTime = this->getCurrentSysTime();
-//            stopTime = executionTime + timeRemaining;
-//
-//            if (curMaxDepth > 2 && curEval != INT32_MIN) {
-//                prevEval = curEval;
-//            }
-//
-//            curEval = minimax(copy, 2, curMaxDepth, stopTime, INT32_MIN,
-//                              INT32_MAX, true, agentPlay);
-//
-//            timeRemaining -= this->getCurrentSysTime() - executionTime;
-//        }
-//
-//        if(curEval == INT32_MIN) {
-//            curEval = prevEval;
-//        }
-//
-//        evaluations.push(std::pair<int, int>(curEval, nextBest.second));
-//
-//        std::string curMoveReadable = OutputHandler::getMoveOutput(primary.getColor(), curEval, false);
-//        char *cstr = new char[curMoveReadable.length() + 1];
-//        strcpy(cstr, curMoveReadable.c_str());
-//
-//        printf("C Evaluated move [%s] (%d / %d) to depth %d with score %d\n", cstr, counter, childrenSize, curMaxDepth, curEval);
-//
-//        counter++;
-//    }
-//
-//    // Iterate through child/evaluation score pairs and select best.
-//    auto retBest = evaluations.top();
-//
-//    std::cout << "C All possible moves: ";
-//    while (!evaluations.empty()) {
-//        auto best = evaluations.top();
-//        evaluations.pop();
-//
-//        std::cout << "[" << OutputHandler::getMoveOutput(playerColor, best.second, false) << " | score = " << best.first
-//                  << "] ";
-//    }
-//
-//    std::cout << std::endl;
-//    Logger::logComment("Evaluated best position: " + OutputHandler::getMoveOutput(playerColor, retBest.second, false) +
-//                       " with score of " + std::to_string(retBest.first));
-//
-//    return retBest.second;
 }
 
 std::priority_queue<Move, std::vector<Move>, std::less<std::vector<Move>::value_type>> OthelloGameBoard::getMovesAsPriorityQueue(uint64_t state) {
