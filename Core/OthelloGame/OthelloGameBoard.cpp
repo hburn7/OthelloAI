@@ -335,7 +335,7 @@ int OthelloGameBoard::evaluate() {
     }
 
     int fCorners = 100;
-    int fAdjacent = 40;
+    int fAdjacent = 60;
     int fMobility = 40;
     int fParity = 20;
     int fStability = 5;
@@ -459,8 +459,11 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
 
     Move bestMove = possibleMoves.top();
     ulong size = possibleMoves.size();
-    int maxDepth = 6;
+    int maxDepth = 8;
     int counter = 1;
+
+    std::vector<std::thread> threads = {};
+
     while(!possibleMoves.empty()) {
         Move cur = possibleMoves.top();
         possibleMoves.pop();
