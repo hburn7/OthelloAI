@@ -10,7 +10,7 @@
 #include "OthelloGame/OthelloGameBoard.h"
 
 // Time allotted for each player. Total game time is 2x this value.
-#define DEF_MAX_TIME 60
+#define DEF_MAX_TIME 120
 
 int main(int argc, char* argv[]) {
     bool interactive = argc > 1 && strcmp(argv[1], "--interactive") == 0;

@@ -380,7 +380,7 @@ int OthelloGameBoard::evaluate() {
 
 std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int player, int depth, int maxDepth,
                                  uint64_t stopTime, int alpha, int beta, bool max) {
-    if(depth >= maxDepth || gameBoard.isGameComplete()) {
+    if(this->getCurrentSysTime() > stopTime || depth >= maxDepth || gameBoard.isGameComplete()) {
         return { gameBoard.evaluate(), depth };
     }
 
@@ -439,9 +439,7 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
     BitBoard primary = this->getForColor(playerColor);
     BitBoard opponent = this->getForColor(-playerColor);
 
-    // Calculates the time to iteratively search 1 move out of the child list.
-    // This way, all children are given equal search time.
-
+    // Moves generated, but only for the sake of counting them. Moves are generated again inside alphaBeta.
     auto possibleMoves = this->generateMovesAsPriorityQueue(primary, opponent);
 
     if(possibleMoves.empty()) {
@@ -452,41 +450,64 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
         return possibleMoves.top();
     }
 
-    // Moves generated, but only for the sake of counting them. Moves are generated again inside alphaBeta.
+    // Calculates the time to iteratively search 1 move out of the child list.
+    // This way, all children are given equal search time.
     int staticTime = (int) ((this->getCfg().getMoveTime() / (double) possibleMoves.size()) * 1000);
 
     Logger::logComment("Allowing " + std::to_string(staticTime) + "ms for next evaluations.");
 
     Move bestMove = possibleMoves.top();
-    ulong size = possibleMoves.size();
-    int maxDepth = 8;
+    uint64_t size = possibleMoves.size();
+    int totalBits = primary.getCellCount() + opponent.getCellCount();
+
+    int depthReached;
     int counter = 1;
 
-    std::vector<std::thread> threads = {};
-
     while(!possibleMoves.empty()) {
+        uint64_t execTime = this->getCurrentSysTime();
+        uint64_t endTime = execTime + staticTime;
+
         Move cur = possibleMoves.top();
         possibleMoves.pop();
 
-        auto newPrimary = BitBoard(primary);
-        auto newBoard = OthelloGameBoard(*this);
-        newBoard.applyMove(newPrimary, cur);
+        int prevVal;
+        std::pair<int, int> eval;
 
-        auto eval = this->alphaBeta(newBoard, -playerColor, 1, maxDepth, 0, INT32_MIN, INT32_MAX, true);
-        cur.setValue(eval.first);
+        // Iterative deepening while time allows. We start at depth 6.
+        for(int maxDepth = 2; this->getCurrentSysTime() < endTime && maxDepth < (64 - totalBits); maxDepth += 2) {
+            auto newPrimary = BitBoard(primary);
+            auto newBoard = OthelloGameBoard(*this);
+            newBoard.applyMove(newPrimary, cur);
+
+            eval = this->alphaBeta(newBoard, -playerColor, 1, maxDepth, endTime, INT32_MIN, INT32_MAX, true);
+            cur.setValue(eval.first);
+            if(maxDepth > 2) {
+                prevVal = cur.getValue();
+            }
+
+            depthReached = maxDepth;
+        }
 
         std::string curMoveReadable = OutputHandler::getMoveOutput(primary.getColor(), cur, false);
         char *cstr = new char[curMoveReadable.length() + 1];
         strcpy(cstr, curMoveReadable.c_str());
 
-        printf("C Evaluated move [%s] (%d / %lu) to depth %d with score %d\n", cstr, counter, size, maxDepth, cur.getValue());
-
-        if(cur.getValue() > bestMove.getValue()) {
+        // The previous value is used because the 'cur' variable's value is invalid at this point due to time interrupt.
+        if(prevVal > bestMove.getValue()) {
             bestMove = cur;
         }
 
+        printf("C Evaluated move [%s] (%d / %llu) to depth %d with score %d\n", cstr, counter, size, depthReached, prevVal);
+        free(cstr);
         counter++;
     }
+
+    std::string bestMoveReadable = OutputHandler::getMoveOutput(primary.getColor(), bestMove, false);
+    char *cstr = new char[bestMoveReadable.length() + 1];
+    strcpy(cstr, bestMoveReadable.c_str());
+
+    printf("C Identified move [%s] as best move with score %d\n", cstr, bestMove.getValue());
+    free(cstr);
 
     return bestMove;
 }
