@@ -10,17 +10,7 @@
 
 BitBoard::BitBoard(int color) {
     this->color = color;
-
-    switch(color) {
-        case BLACK: {
-            this->bits = BLACK_BITS;
-            break;
-        }
-        case WHITE: {
-            this->bits = WHITE_BITS;
-            break;
-        }
-    }
+    this->bits = color == BLACK ? BLACK_BITS : WHITE_BITS;
 }
 
 BitBoard::BitBoard(int color, uint64_t bits) {

@@ -107,11 +107,6 @@ private:
     BitBoard m_opponentBoard;
 
     /**
-     * Returns a bitboard for a given color.
-     * @param color The color of the board to retrieve.
-     */
-    BitBoard getBoard(int color);
-    /**
      * Captures opponent pieces in a line, flipping all necessary opponent pieces along the way.
      * @param color The color of the player making the action
      * @param newMove The most recent position selected on the board to move to.

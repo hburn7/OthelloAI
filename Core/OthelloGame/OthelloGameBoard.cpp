@@ -99,17 +99,6 @@ void OthelloGameBoard::applyMove(BitBoard board, Move move) {
     this->lineCap(board, move);
 }
 
-BitBoard OthelloGameBoard::getBoard(int color) {
-    switch (color) {
-        case BLACK:
-            return this->m_playerBoard;
-        case WHITE:
-            return this->m_opponentBoard;
-        default:
-            throw std::exception();
-    }
-}
-
 bool OthelloGameBoard::isGameComplete() {
     return this->isGameComplete(*this);
 }
@@ -245,7 +234,12 @@ double OthelloGameBoard::getSumWeight(int p_amt, int o_amt) {
     int sum = p_amt + o_amt;
     int diff = p_amt - o_amt;
 
+    if(diff == sum) {
+        return 100.0;
+    }
+
     double w = 100.0 * diff / sum;
+
     if(sum < 0) {
         return -std::abs(w);
     }
@@ -269,79 +263,87 @@ int OthelloGameBoard::evaluate() {
     int pPosWeight = 0;
     int oPosWeight = 0;
 
-    int pCorners = 0;
-    int oCorners = 0;
+    uint64_t pCornerMask = pBoard.getBits() & CORNER_MASK;
+    uint64_t oCornerMask = oBoard.getBits() & CORNER_MASK;
 
-    // Apply high negative weight to disks residing in corner-flankable spaces.
-    int pAdjCorners = 0;
-    int oAdjCorners = 0;
+    uint64_t pAdjCornerMask = pBoard.getBits() & CORNER_ADJACENT_MASK;
+    uint64_t oAdjCornerMask = oBoard.getBits() & CORNER_ADJACENT_MASK;
 
-    uint64_t playerCornerMask = pBoard.getBits() & CORNER_MASK;
-    uint64_t oppCornerMask = oBoard.getBits() & CORNER_MASK;
+    int pCorners = countBits(pCornerMask);
+    int oCorners = countBits(oCornerMask);
 
-    uint64_t playerAdjCornerMask = pBoard.getBits() & CORNER_ADJACENT_MASK;
-    uint64_t oppAdjCornerMask = oBoard.getBits() & CORNER_ADJACENT_MASK;
+    // Give a bonus corner to opponent for the case that
+    // both opponent and player have at least one corner.
+    // We want to do everything in our power to prevent the opponent
+    // from obtaining more corners.
+    if(pCorners > 0 && oCorners > 0) {
+        oCorners += 1;
+    }
 
-    auto pCornerPos = std::vector<int>{};
-    auto oCornerPos = std::vector<int>{};
+    int pAdjCorners = countBits(pAdjCornerMask);
+    int oAdjCorners = countBits(oAdjCornerMask);
 
-    for (int i = 0; i < 64; i++) {
+    for(int i = 0; i < 64; i++) {
         uint64_t mask = 1LL << i;
         int weight = WEIGHT_MAP[i];
-
-        // Corners
-        if ((playerCornerMask & mask) != 0) {
-            pCorners++;
-            pCornerPos.push_back(i);
-        } else if ((oppCornerMask & mask) != 0) {
-            oCorners++;
-            oCornerPos.push_back(i);
-        }
-
-        // Adjacent corners
-        if ((playerAdjCornerMask & mask) != 0) {
-            pAdjCorners++;
-        } else if ((oppAdjCornerMask & mask) != 0) {
-            oAdjCorners++;
-        }
-
-        // Apply pos weights
-        if ((pMovesPossible & mask) != 0) {
+        if((mask & pBoard.getBits()) != 0) {
             pPosWeight += weight;
-        } else if ((oMovesPossible & mask) != 0) {
+        } else if((mask & oBoard.getBits()) != 0) {
             oPosWeight += weight;
         }
     }
 
-    for(int i = 0; i < pCornerPos.size(); i++) {
-        auto matchingAdjacents = STABILITY_IGNORES.find(pCornerPos.at(i));
+    /**
+     * Compares player boards with corners listed in STABILITY_IGNORES.
+     * If the corner is set, then the three values inside of the array matched
+     * to the key (corner pos) are checked against the player boards as well.
+     *
+     * We decrement the value of the pAdjCorners/oAdjCorners because once we have
+     * captured a corner, the negative weight assigned to those values becomes irrelevant.
+     *
+     * We also want to re-add the stability value of such positions, as they actually
+     * now have positive weight instead of negative weight.
+     */
+    for(auto iterator = STABILITY_IGNORES.begin(); iterator != STABILITY_IGNORES.end(); ++iterator) {
+        int cornerKey = iterator->first;
+        std::array<int, 3> adjacents = iterator->second;
 
-        if(matchingAdjacents != STABILITY_IGNORES.end()) {
-            std::array<int, 3> adjacent = matchingAdjacents->second;
-            for(int j = 0; j < adjacent.size(); j++) {
-                int known = adjacent.at(j);
-                if(known == i) {
-                    pPosWeight -= WEIGHT_MAP[i];
+        uint64_t mask = 1LL << cornerKey;
+
+        // Do we have a corner set?
+        if((pBoard.getBits() & mask) != 0) {
+            for(auto adjacentIter = adjacents.begin(); adjacentIter != adjacents.end(); ++adjacentIter) {
+                // If so, iterate through pos's that we defined as adjacent to
+                // said corner in STABILITY_IGNORES.
+                uint64_t curAdjMask = 1LL << (*adjacentIter);
+                if((pBoard.getBits() & curAdjMask) != 0) {
+                    // Decrement adjacent corner count and increase stability score
+                    // if an area adjacent to a set corner is also captured.
                     pAdjCorners -= 1;
+                    pPosWeight += std::abs(WEIGHT_MAP[*adjacentIter] * 2);
+                }
+            }
+        } else if((oBoard.getBits() & mask) != 0) {
+            for(auto adjacentIter = adjacents.begin(); adjacentIter != adjacents.end(); ++adjacentIter) {
+                uint64_t curAdjMask = 1LL << (*adjacentIter);
+                if((oBoard.getBits() & curAdjMask) != 0) {
+                    oAdjCorners -= 1;
+                    oPosWeight += std::abs(WEIGHT_MAP[*adjacentIter] * 2);
                 }
             }
         }
     }
 
-//    for(int i = 0; i < oCornerPos.size(); i++) {
-//        auto matchingAdjacents = STABILITY_IGNORES.find(oCornerPos.at(i));
-//
-//        if(matchingAdjacents != STABILITY_IGNORES.end()) {
-//            std::array<int, 3> adjacent = matchingAdjacents->second;
-//            for(int j = 0; j < adjacent.size(); j++) {
-//                int known = adjacent.at(j);
-//                if(known == i) {
-//                    oPosWeight -= WEIGHT_MAP[i];
-//                    oAdjCorners -= 1;
-//                }
-//            }
-//        }
-//    }
+    int fCorners = 100;
+    int fAdjacent = 40;
+    int fMobility = 40;
+    int fParity = 20;
+    int fStability = 5;
+
+    int sumMoves = pCount + oCount;
+    if(sumMoves >= 58) {
+        fParity = 75;
+    }
 
     wStability = getSumWeight(pPosWeight, oPosWeight);
     wParity = getSumWeight(pCount, oCount);
@@ -349,40 +351,31 @@ int OthelloGameBoard::evaluate() {
     wAdjCorners = -getSumWeight(pAdjCorners, oAdjCorners);
     wMobility = getSumWeight(countBits(pMovesPossible), countBits(oMovesPossible));
 
-    int fCorners = 200;
-    int fAdjacent = 20;
-    int fMobility = 28;
-    int fParity = 8;
-    int fStability = 45;
-
+    // Apply high weight to forcing passes.
     if(oMovesPossible == 0) {
-        fMobility = 500;
+        wMobility = 1000;
+    }
+    if(pMovesPossible == 0) {
+        wMobility = -1000;
     }
 
-    int sumMoves = pCount + oCount;
-    if(sumMoves >= 50) {
-        fParity = 35;
-        fMobility = 30;
-    }
-    if(sumMoves >= 58) {
-        fParity = 200;
-        fMobility = 10;
-        fStability = 5;
-    }
-
-    int score = (int) (fCorners * wCorners) + /*(fAdjacent * wAdjCorners) +*/ (fMobility * wMobility) +
+    int score = (int) (fCorners * wCorners) + (fAdjacent * wAdjCorners) + (fMobility * wMobility) +
                 (fParity * wParity) + (fStability * wStability);
+
+    if(pAdjCorners == 1) {
+//        printf("Foo\n");
+    }
 
     // End game. Return below for confirmed win / loss.
     if(sumMoves == 64) {
         if(pCount < oCount) {
-            return INT32_MIN;
+            return -1000000 * (oCount - pCount);
         } else {
-            return INT32_MAX;
+            return 1000000 * (pCount - oCount);
         }
+    } else {
+        return score;
     }
-
-    return score;
 }
 
 std::pair<int, int> OthelloGameBoard::alphaBeta(OthelloGameBoard gameBoard, int player, int depth, int maxDepth,
@@ -466,6 +459,7 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
 
     Move bestMove = possibleMoves.top();
     ulong size = possibleMoves.size();
+    int maxDepth = 6;
     int counter = 1;
     while(!possibleMoves.empty()) {
         Move cur = possibleMoves.top();
@@ -475,7 +469,6 @@ Move OthelloGameBoard::selectMove(int playerColor, bool random) {
         auto newBoard = OthelloGameBoard(*this);
         newBoard.applyMove(newPrimary, cur);
 
-        int maxDepth = 10;
         auto eval = this->alphaBeta(newBoard, -playerColor, 1, maxDepth, 0, INT32_MIN, INT32_MAX, true);
         cur.setValue(eval.first);
 

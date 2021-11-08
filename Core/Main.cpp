@@ -13,7 +13,7 @@
 #define DEF_MAX_TIME 60
 
 int main(int argc, char* argv[]) {
-    bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
+    bool interactive = argc > 1 && strcmp(argv[1], "--interactive") == 0;
     int gameTime = argc > 2 ? std::stoi(argv[2]) : DEF_MAX_TIME;
 
     // Init config
