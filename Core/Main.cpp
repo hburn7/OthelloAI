@@ -3,8 +3,6 @@
 
 #include "Logger.h"
 
-#include "Agent/Agent.h"
-
 #include "IO/Input/InputHandler.h"
 #include "IO/Output/OutputHandler.h"
 
@@ -12,26 +10,16 @@
 #include "OthelloGame/OthelloGameBoard.h"
 
 // Time allotted for each player. Total game time is 2x this value.
-#define DEF_MAX_TIME 150
+#define DEF_MAX_TIME 120
 
 int main(int argc, char* argv[]) {
-    bool interactive = argc > 1 && strcmp(argv[1], "-interactive") == 0;
+    bool interactive = argc > 1 && strcmp(argv[1], "--interactive") == 0;
     int gameTime = argc > 2 ? std::stoi(argv[2]) : DEF_MAX_TIME;
 
     // Init config
     Config cfg = Config(interactive, gameTime);
-
-    // Init both sides.
-    OthelloColor agentColor = Black;
-    OthelloColor playerColor = White;
-
-    BitBoard agentBoard = BitBoard(agentColor);
-    BitBoard playerBoard = BitBoard(playerColor);
-
-    OthelloGameBoard gameBoard = OthelloGameBoard(cfg, agentBoard, playerBoard);
-
-    Logger::logComment("Gameboard initialized.");
-    gameBoard.drawBoard();
+    int agentColor;
+    int opponentColor;
 
     std::string input;
     Directive directive;
@@ -40,18 +28,20 @@ int main(int argc, char* argv[]) {
         Logger::logComment("Please initialize the agent color [I B] or [I W].");
 
         input = InputHandler::readInput();
-        directive = InputHandler::identifyDirective(input, Black);
+        directive = InputHandler::identifyDirective(input, BLACK);
 
         if(directive == Directive::InitializeBlack) {
             Logger::logComment("Got it! I will play as black, you will play as white.");
-            // Computer is already predefined as black, so we don't need to change anything.
+
+            agentColor = BLACK;
+            opponentColor = WHITE;
 
             break;
         } else if(directive == Directive::InitializeWhite) {
             Logger::logComment("Got it! I will play as white, you will play as black.");
 
-            agentColor = White;
-            playerColor = Black;
+            agentColor = WHITE;
+            opponentColor = BLACK;
 
             break;
         } else {
@@ -60,15 +50,22 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    BitBoard agentBoard = BitBoard(agentColor);
+    BitBoard opponentBoard = BitBoard(opponentColor);
+    OthelloGameBoard gameBoard = OthelloGameBoard(cfg, agentColor, agentBoard, opponentBoard);
+
+    Logger::logComment("Gameboard initialized.");
+    gameBoard.drawBoard();
+
     OutputHandler::outputDirective(directive, input);
 
     // Primary game loop
-    bool playAsBlack = agentColor == Black;
+    bool playAsBlack = agentColor == BLACK;
     bool blackTurn = true;
 
     while(!gameBoard.isGameComplete()) {
-        agentBoard = agentColor == Black ? gameBoard.getBlack() : gameBoard.getWhite();
-        playerBoard = playerColor == Black ? gameBoard.getBlack() : gameBoard.getWhite();
+        agentBoard = gameBoard.getPlayer();
+        opponentBoard = gameBoard.getOpponent();
 
         std::string prompt = blackTurn ? "Black turn" : "White turn";
         Logger::logComment(prompt);
@@ -79,11 +76,11 @@ int main(int argc, char* argv[]) {
 
         // Agent makes a move.
         if(agentTurn) {
-            int move = gameBoard.selectMove(agentColor, agentBoard.getBits(), playerBoard.getBits());
+            Move move = gameBoard.selectMove(agentColor, false);
 
             // Apply move to board if not passing
-            if(move >= 0) {
-                gameBoard.applyMove(agentColor, move);
+            if(!move.isPass()) {
+                gameBoard.applyMove(agentBoard, move);
             }
 
             input = OutputHandler::getMoveOutput(agentColor, move, true);
@@ -91,38 +88,38 @@ int main(int argc, char* argv[]) {
         }
         else
         {
-            int move;
-            uint64_t possibleMoves = gameBoard.generateMoves(playerBoard.getBits(), agentBoard.getBits());
-
+            Move move;
             if(cfg.isInteractive()) {
+                uint64_t possibleMoves = gameBoard.generateMoveMask(opponentBoard.getBits(), agentBoard.getBits());
+
                 // Player prompted to make a move
                 input = InputHandler::readInput();
-                move = OutputHandler::toPos(input);
+                move = OutputHandler::toMove(input);
 
-                // Compare player move to any legal move. We do not allow illegal moves.        -- Checks for legal pass --
-                bool valid = (possibleMoves > 0 && ((1LL << move) & possibleMoves) != 0) || (move == -1 && possibleMoves == 0);
+                // Compare player move to any legal move. We do not allow illegal moves.                  -- Checks for legal pass --
+                bool valid = (possibleMoves > 0 && ((1LL << move.getPos()) & possibleMoves) != 0) || (move.isPass() && possibleMoves == 0);
 
                 while(!valid) {
                     Logger::logComment("Invalid move, please try again.");
 
                     input = InputHandler::readInput();
-                    move = OutputHandler::toPos(input);
+                    move = OutputHandler::toMove(input);
 
-                    valid = ((1LL << move) & possibleMoves) != 0;
+                    valid = ((1LL << move.getPos()) & possibleMoves) != 0;
                 }
 
             } else {
                 // "Player" (agent) makes a move if not m_interactive
-                move = gameBoard.selectMove(playerColor, playerBoard.getBits(), agentBoard.getBits());
+                move = gameBoard.selectMove(opponentColor, true);
             }
 
             // Apply move to board if not passing.
-            if(move >= 0) {
-                gameBoard.applyMove(playerColor, move);
+            if(!move.isPass()) {
+                gameBoard.applyMove(opponentBoard, move);
             }
 
-            input = OutputHandler::getMoveOutput(playerColor, move, true);
-            newDirective = InputHandler::identifyDirective(input, playerColor);
+            input = OutputHandler::getMoveOutput(opponentColor, move, true);
+            newDirective = InputHandler::identifyDirective(input, opponentColor);
         }
 
         // Output
@@ -139,12 +136,12 @@ int main(int argc, char* argv[]) {
         blackTurn = !blackTurn;
 
         // Score Tracking
-        Logger::logComment("Score (Black): " + std::to_string(gameBoard.getBlack().getCellCount()));
-        Logger::logComment("Score (White): " + std::to_string(gameBoard.getWhite().getCellCount()));
+        Logger::logComment("Score (Black): " + std::to_string(gameBoard.getForColor(BLACK).getCellCount()));
+        Logger::logComment("Score (White): " + std::to_string(gameBoard.getForColor(WHITE).getCellCount()));
     }
 
     // Output end-game result
-    int f_black = gameBoard.countPieces(Black);
+    int f_black = gameBoard.countPieces(BLACK);
     std::cout << f_black << std::endl;
 
     return EXIT_SUCCESS;

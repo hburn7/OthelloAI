@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <array>
 
+#include "Move.h"
 #include "../Logger.h"
-#include "OthelloColor.h"
 
 /**
  * Binary representation of a 2D array gameboard, one for each color. This class provides
@@ -21,30 +21,24 @@ public:
      * Initializes a bitboard for a given color.
      * @param color The color of the bitboard, either black or white.
      */
-    BitBoard(OthelloColor color);
+    BitBoard(int color);
     /**
      * Initializes a bitboard with a given color and bit configuration.
      * @param color The color of the bitboard, either black or white.
      * @param bits Binary representation of the gameboard for this color.
      */
-    BitBoard(OthelloColor color, uint64_t bits);
+    BitBoard(int color, uint64_t bits);
     /**
      * Copies a BitBoard into a new instance of a BitBoard.
      * @param oldBoard The old board that we are making a copy of.
      */
     BitBoard(BitBoard const &oldBoard);
     /**
-     * Updates an existing bitboard with a new set of data.
-     * @param oldBoard The board to update.
-     * @param bits The new set of data (bits) to update.
-     */
-    BitBoard(BitBoard const &oldBoard, uint64_t bits);
-    /**
      * Sets a single cell into an existing bitboard that may or may not be prepopulated.
-     * @param pos The position on the board, ranging 0-63 inclusive, to set on the board.
+     * @param move The move on the board to apply.
      * @return the updated board
      */
-    BitBoard setCellState(int pos);
+    void applyIsolatedMove(Move move);
     /**
      * Gets the state of a cell in the bitboard.
      * @param pos The position on the board, ranging 0-63 inclusive, that is being looked up.
@@ -69,10 +63,10 @@ public:
     /**
      * @return The color of the player who owns this board.
      */
-    OthelloColor getColor();
+    int getColor();
 
 private:
-    OthelloColor color; // Either black or white
+    int color; // Either black or white
     uint64_t bits;
 };
 

@@ -11,7 +11,7 @@ std::string InputHandler::readInput() {
     return input;
 }
 
-Directive InputHandler::identifyDirective(std::string input, OthelloColor color) {
+Directive InputHandler::identifyDirective(std::string input, int color) {
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
 
     // All input is case sensitive.
@@ -49,9 +49,9 @@ Directive InputHandler::identifyDirective(std::string input, OthelloColor color)
             }
 
             if(input[0] == 'B') {
-                return color == Black ? MoveSelf : MoveOpponent;
+                return color == BLACK ? MoveSelf : MoveOpponent;
             } else if(input[0] == 'W') {
-                return color == White ? MoveSelf : MoveOpponent;
+                return color == WHITE ? MoveSelf : MoveOpponent;
             }
             return Directive::Invalid;
     }
