@@ -538,10 +538,6 @@ int OthelloGameBoard::getPlayerColor() {
     return this->m_playerColor;
 }
 
-int OthelloGameBoard::getOpponentColor() {
-    return this->m_playerColor == WHITE ? BLACK : WHITE;
-}
-
 void OthelloGameBoard::setForColor(BitBoard board) {
     auto playerBoard = this->getPlayer();
     if (board.getColor() == playerBoard.getColor()) {

@@ -13,11 +13,6 @@ BitBoard::BitBoard(int color) {
     this->bits = color == BLACK ? BLACK_BITS : WHITE_BITS;
 }
 
-BitBoard::BitBoard(int color, uint64_t bits) {
-    this->color = color;
-    this->bits = bits;
-}
-
 BitBoard::BitBoard(const BitBoard &oldBoard) {
     this->color = oldBoard.color;
     this->bits = oldBoard.bits;

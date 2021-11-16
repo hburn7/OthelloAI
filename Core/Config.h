@@ -12,13 +12,9 @@ public:
 
     bool isInteractive() const;
     double getMoveTime() const;
-
-    int getTimeRemaining() const;
-    void setTimeRemaining(int mTimeRemaining);
 private:
     bool m_interactive;
     double m_move_time;
-    int m_time_remaining;
 };
 
 

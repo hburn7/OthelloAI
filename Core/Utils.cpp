@@ -23,14 +23,6 @@ char Utils::getColFromInt(int column) {
     return columns.at(column);
 }
 
-int Utils::parseInt(const std::string &input) {
-    try {
-        return std::stoi(input);
-    } catch(std::exception &e) {
-        return -1;
-    }
-}
-
 std::tuple<int, char> Utils::posToRowCol(int pos) {
     int row = 7 - (pos / 8);
     int col = 7 - (pos % 8);

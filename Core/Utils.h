@@ -18,7 +18,6 @@ public:
      * Converts an integer representation of a column into a char to be printed out.
      */
     static char getColFromInt(int column);
-    static int parseInt(const std::string &input);
     /**
      *
      * @param pos The integer position on the bitboard, ranging from 0-63 inclusive.

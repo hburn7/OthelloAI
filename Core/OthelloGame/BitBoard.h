@@ -12,52 +12,44 @@
 #include "../Logger.h"
 
 /**
- * Binary representation of a 2D array gameboard, one for each color. This class provides
- * wrapper methods ONLY to be accessed by the OthelloGameBoard class.
+ * Binary representation of a gameboard, one for each color.
  */
 class BitBoard {
 public:
     /**
      * Initializes a bitboard for a given color.
-     * @param color The color of the bitboard, either black or white.
+     * @param color The color of the bitboard, either black or white. Color is to be pulled from Color.h
      */
     BitBoard(int color);
     /**
-     * Initializes a bitboard with a given color and bit configuration.
-     * @param color The color of the bitboard, either black or white.
-     * @param bits Binary representation of the gameboard for this color.
-     */
-    BitBoard(int color, uint64_t bits);
-    /**
-     * Copies a BitBoard into a new instance of a BitBoard.
+     * Copy constructor
      * @param oldBoard The old board that we are making a copy of.
      */
     BitBoard(BitBoard const &oldBoard);
     /**
-     * Sets a single cell into an existing bitboard that may or may not be prepopulated.
+     * Applies the move to the bitboard. All this does is set the bit to "on" that corresponds to
+     * the move's pos value.
      * @param move The move on the board to apply.
-     * @return the updated board
      */
     void applyIsolatedMove(Move move);
     /**
      * Gets the state of a cell in the bitboard.
      * @param pos The position on the board, ranging 0-63 inclusive, that is being looked up.
-     * @return True if the cell is populated with a piece, False if empty.
+     * @return True if the cell is populated with a piece (1 bit), False if empty (0 bit).
      */
     bool getCellState(int pos);
     /**
-     * Gets the "score" of the board (the number of pieces allocated by the player).
+     * Gets the amount of on-bits in the board (the number of pieces allocated by the player).
      * @return The amount of non-empty pieces allocated on the bitboard.
      */
     int getCellCount();
     /**
-     * Returns the bits for the board in the form of uint64_t.
-     * @return A uint_64t containing the bits for this board.
+     * @return The uint64_t representation of the board (decimal).
      */
     uint64_t getBits();
     /**
-     * Sets this boards bits to the desired value.
-     * @param bits Value to update this board's bits to.
+     * Sets this board's bits to the desired value.
+     * @param bits Value to set this board's bits to.
      */
     void setBits(uint64_t bits);
     /**

@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
     std::string input;
     Directive directive;
 
+    // Validate initialization input
     while(true) {
         Logger::logComment("Please initialize the agent color [I B] or [I W].");
 
@@ -110,7 +111,7 @@ int main(int argc, char* argv[]) {
 
             } else {
                 // "Player" (agent) makes a move if not m_interactive
-                move = gameBoard.selectMove(opponentColor, true);
+                move = gameBoard.selectMove(opponentColor, false);
             }
 
             // Apply move to board if not passing.
@@ -122,7 +123,7 @@ int main(int argc, char* argv[]) {
             newDirective = InputHandler::identifyDirective(input, opponentColor);
         }
 
-        // Output
+        // Referee compatible output
         if(agentTurn) {
             OutputHandler::outputDirective(newDirective, input);
         }
@@ -140,7 +141,7 @@ int main(int argc, char* argv[]) {
         Logger::logComment("Score (White): " + std::to_string(gameBoard.getForColor(WHITE).getCellCount()));
     }
 
-    // Output end-game result
+    // End of game output
     int f_black = gameBoard.countPieces(BLACK);
     std::cout << f_black << std::endl;
 

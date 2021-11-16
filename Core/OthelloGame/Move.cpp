@@ -12,16 +12,12 @@ int Move::getPos() const {
     return m_pos;
 }
 
-void Move::setPos(int pos) {
-    m_pos = pos;
-}
-
 int Move::getValue() const {
     return m_value;
 }
 
 void Move::setValue(int value) {
-    m_value = value;
+    this->m_value = value;
 }
 
 bool Move::isPass() {
