@@ -1,5 +1,5 @@
 //
-// Created by stage on 10/31/21.
+// Created by hburn7 on 10/31/21.
 //
 
 #ifndef OTHELLOPROJECT_CPP_COLOR_H

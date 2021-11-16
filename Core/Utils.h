@@ -1,5 +1,5 @@
 //
-// Created by Harry Burnett on 9/20/21.
+// Created by hburn7 on 9/20/21.
 //
 
 #ifndef OTHELLOPROJECT_CPP_UTILS_H
